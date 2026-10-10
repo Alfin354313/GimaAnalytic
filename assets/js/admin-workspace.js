@@ -17,6 +17,24 @@ async function loadSurveys(){
   $("org-role").textContent="Peran: "+role();
   $("create-panel").hidden=!canEdit();
   renderSurveys();
+  await loadMembers(orgId);
+}
+async function loadMembers(orgId){
+  const root=$("member-list");if(!root)return;
+  root.replaceChildren(el("p","Memuat anggota...","admin-meta"));
+  const {data,error}=await client.from("organization_members").select("user_id,role").eq("organization_id",orgId);
+  if($("org-select").value!==orgId)return;
+  root.replaceChildren();
+  if(error){root.append(el("p","Daftar anggota belum dapat diakses sesuai kebijakan RLS.","admin-meta"));return;}
+  if(!data?.length){root.append(el("p","Tidak ada data anggota yang dapat ditampilkan.","admin-meta"));return;}
+  const counts=new Map();
+  for(const member of data)counts.set(member.role,(counts.get(member.role)||0)+1);
+  for(const [memberRole,count] of counts){
+    const row=el("div",undefined,"admin-stat");
+    row.append(el("span",memberRole==="owner"?"Pemilik":memberRole==="admin"?"Admin":memberRole==="member"?"Anggota":memberRole),el("strong",String(count)));
+    root.append(row);
+  }
+  root.append(el("p","Jumlah yang terlihat: "+data.length+" anggota. Angka mengikuti izin akses akun Anda.","admin-meta"));
 }
 function action(label,fn){const b=el("button",label);b.type="button";b.addEventListener("click",fn);return b;}
 function renderSurveys(){
