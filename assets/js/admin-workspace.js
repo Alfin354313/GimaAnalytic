@@ -95,7 +95,7 @@ function downloadReport(s,data){
     const visible=Number(q.response_count)>=5&&q.average_score!==null;
     return [q.question_prompt,visible?Number(q.response_count):"Disembunyikan",visible?Number(q.average_score).toFixed(2):"Disembunyikan"];
   })];
-  const blob=new Blob(["\\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\\r\\n")],{type:"text/csv;charset=utf-8"});
+  const blob=new Blob(["\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
   const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="gima-laporan-"+s.id+".csv";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 async function openQuestions(s){
