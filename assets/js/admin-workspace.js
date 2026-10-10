@@ -119,9 +119,21 @@ async function openReport(s){
     advice.append(el("p","Area prioritas: "+low.question_prompt+" ("+lowScore.toFixed(2)+"/5)."));
     const ul=el("ul");for(const item of actions)ul.append(el("li",item));advice.append(ul);
     if(lowScore>=3.5)advice.append(el("p","Seluruh skor yang ditampilkan relatif tinggi; rekomendasi ini bersifat pemeliharaan dan peningkatan berkelanjutan.","admin-meta"));
+    const plan=action("Unduh Rencana Tindak Lanjut (CSV)",()=>downloadActionPlan(s,low,actions));
+    plan.className="report-download";advice.append(plan);
     root.append(advice);
   }
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function downloadActionPlan(s,priority,actions){
+  const cell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
+  const rows=[["Survei","Area prioritas","Skor rata-rata","Rencana tindakan","Penanggung jawab","Target selesai","Status"],
+    ...actions.map(item=>[s.title,priority.question_prompt,Number(priority.average_score).toFixed(2),item,"","","Belum dimulai"])];
+  const content="\uFEFF"+rows.map(row=>row.map(cell).join(",")).join("\r\n");
+  const blob=new Blob([content],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="gima-rencana-tindakan-"+s.id+".csv";
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function downloadReport(s,data){
   const csvCell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
