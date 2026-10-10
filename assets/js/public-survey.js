@@ -39,7 +39,7 @@ async function load(){
   submitting=true;feedback="Sedang mengirim jawaban...";refresh();button.textContent="Mengirim...";
   try{
    const payload=questions.map(q=>({question_id:q.id,score:answers.get(q.id)}));
-   const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload});
+   const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload,p_consented:check.checked});
    if(submitError)throw submitError;
    if(result&&typeof result==="object"&&result.success===false)throw Error(result.message||"Jawaban belum diterima.");
    submitted=true;button.textContent="Jawaban Terkirim";
