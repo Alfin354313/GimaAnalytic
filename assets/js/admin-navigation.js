@@ -33,7 +33,7 @@ const setup=()=>{
     const option=document.createElement("option");option.value=key;option.textContent=label;mobile.append(option);
   }
   const email=panel.querySelector(":scope > .admin-meta");if(email)main.prepend(email);
-  grid.replaceWith(shell);billing.remove();shell.append(sidebar,main);
+  grid.replaceWith(shell);shell.append(sidebar,main);
   const select=key=>{
     if(!sections.has(key))key="overview";
     for(const [id,section] of sections){section.classList.toggle("gima-view-active",id===key);}
