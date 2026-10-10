@@ -163,8 +163,19 @@ async function openReport(s){
     "Rekomendasi adalah titik awal diskusi, bukan keputusan otomatis tentang individu atau karyawan."
   ])methodList.append(el("li",line));
   method.append(methodList);root.append(method);
+  const checklist=el("section",undefined,"professional-checklist");
+  checklist.append(el("h3","Checklist Sebelum Laporan Dibagikan"));
+  const items=[
+    "Pastikan nama organisasi dan judul survei sudah benar.",
+    "Periksa kembali pertanyaan dengan skor rendah dan konteks organisasinya.",
+    "Hindari menyimpulkan identitas responden dari kelompok kecil.",
+    "Konfirmasi rekomendasi dengan pemangku kepentingan sebelum implementasi."
+  ];
+  const checks=el("ul");for(const item of items)checks.append(el("li",item));
+  checklist.append(checks);
+  checklist.append(el("p","Checklist ini panduan internal dan tidak menggantikan validasi profesional.","admin-meta"));
+  root.append(checklist);
   const reportFooter=el("p","GIMA Analytics • Dokumen ringkasan survei • "+new Date().toLocaleDateString("id-ID"),"professional-report-footer");
-  root.append(reportFooter);
   const printButton=action("Cetak / Simpan PDF",()=>window.print());
   printButton.className="report-download report-print-button";
   root.append(printButton);
@@ -232,6 +243,7 @@ async function openReport(s){
     plan.className="report-download";advice.append(plan);
     root.append(advice);
   }
+  root.append(reportFooter);
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function renderPeriodComparison(root,current,currentData){
