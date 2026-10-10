@@ -2,3 +2,6 @@
 /* Brand symbol from the supplied Giandra Maheswara logo */
 .brand-logo{display:block;width:48px;height:48px;object-fit:contain;flex-shrink:0}
 @media(max-width:700px){.brand-logo{width:43px;height:43px}}
+
+/* Phase 2: consulting process and packages */
+.process{background:#fff}.process-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:38px}.process-grid article{padding:25px;border:1px solid #dcebef;border-radius:18px;background:#fff}.process-grid span{display:inline-grid;place-items:center;width:43px;height:43px;border-radius:12px;background:#def5f6;color:#087d87;font-weight:800}.process-grid p{font-size:14px;color:var(--muted)}.text-link{display:inline-block;margin-top:10px;color:#087f88;font-weight:700;font-size:13px}.text-link:hover{text-decoration:underline}@media(max-width:950px){.process-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.process-grid{grid-template-columns:1fr}}
