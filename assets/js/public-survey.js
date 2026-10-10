@@ -1,0 +1,54 @@
+(()=>{"use strict";
+const $=id=>document.getElementById(id);
+const id=new URLSearchParams(location.search).get("id");
+const labels=["Sangat tidak setuju","Tidak setuju","Netral","Setuju","Sangat setuju"];
+const answers=new Map();
+if(!id||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){$("public-title").textContent="Link survei tidak valid";return;}
+async function load(){
+ if(!window.GIMA_AUTH?.configured())throw Error("Konfigurasi Supabase belum tersedia");
+ const client=window.GIMA_AUTH.getClient();
+ const {data,error}=await client.rpc("gima_public_survey",{p_survey_id:id});
+ if(error)throw Error("Survei belum dapat dimuat. Pastikan SQL publikasi Tahap 7 sudah dijalankan.");
+ if(!data){$("public-title").textContent="Survei tidak tersedia";$("public-status").textContent="Survei mungkin belum dipublikasikan atau sudah ditutup.";return;}
+ $("public-title").textContent=data.title;
+ $("public-description").textContent=data.description||"";
+ const root=$("public-questions");root.replaceChildren();
+ const questions=data.questions||[];
+ questions.forEach((q,index)=>{
+  const field=document.createElement("fieldset");field.className="response-card";
+  const title=document.createElement("legend");title.textContent=(index+1)+". "+q.prompt;field.append(title);
+  const opts=document.createElement("div");opts.className="response-options";
+  labels.forEach((label,i)=>{
+   const wrapper=document.createElement("label");wrapper.className="response-option";
+   const radio=document.createElement("input");radio.type="radio";radio.name="question-"+q.id;radio.value=String(i+1);
+   radio.addEventListener("change",()=>{answers.set(q.id,i+1);refresh();});
+   wrapper.append(radio,document.createTextNode(" "+(i+1)+" — "+label));opts.append(wrapper);
+  });field.append(opts);root.append(field);
+ });
+ const controls=document.createElement("section");controls.className="response-card";
+ const consent=document.createElement("label");const check=document.createElement("input");check.type="checkbox";
+ consent.append(check,document.createTextNode(" Saya memahami tujuan survei dan menyetujui pemrosesan jawaban anonim saya untuk analisis agregat."));controls.append(consent);
+ const progress=document.createElement("p");progress.setAttribute("role","status");controls.append(progress);
+ const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban";button.disabled=true;controls.append(button);
+ root.append(controls);
+ let submitting=false;let submitted=false;let feedback="";
+ function refresh(){button.disabled=submitting||submitted||answers.size!==questions.length||!check.checked||questions.length===0;progress.textContent=feedback||("Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan"));}
+ check.addEventListener("change",refresh);refresh();
+ button.addEventListener("click",async()=>{
+  if(submitting||submitted||answers.size!==questions.length||!check.checked)return;
+  submitting=true;feedback="Sedang mengirim jawaban...";refresh();button.textContent="Mengirim...";
+  try{
+   const payload=questions.map(q=>({question_id:q.id,score:answers.get(q.id)}));
+   const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload,p_consented:check.checked});
+   if(submitError)throw submitError;
+   if(result&&typeof result==="object"&&result.success===false)throw Error(result.message||"Jawaban belum diterima.");
+   submitted=true;button.textContent="Jawaban Terkirim";
+   feedback="Terima kasih. Jawaban berhasil dikirim.";
+   $("public-status").textContent="Jawaban telah dikirim. Anda dapat menutup halaman ini.";
+  }catch(e){button.textContent="Coba Kirim Lagi";feedback="Pengiriman gagal. Jawaban belum terkonfirmasi tersimpan. "+(e.message||"Periksa koneksi dan konfigurasi fungsi Supabase.");}
+  finally{submitting=false;refresh();}
+ });
+ $("public-status").textContent="Survei tanpa kode undangan. Isi seluruh pertanyaan dan berikan persetujuan sebelum mengirim.";
+}
+load().catch(e=>{$("public-title").textContent="Survei belum tersedia";$("public-status").textContent=e.message;});
+})();
