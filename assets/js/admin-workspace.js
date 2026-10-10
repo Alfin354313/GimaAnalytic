@@ -26,6 +26,7 @@ function renderSurveys(){
     const card=el("article",undefined,"admin-survey");card.append(el("h3",s.title),el("p",s.description||"Tanpa deskripsi","admin-meta"),el("p","Status: "+s.status,"admin-meta"));
     const actions=el("div",undefined,"admin-actions");
     actions.append(action("Pertanyaan",()=>openQuestions(s)));
+    actions.append(action("Laporan",()=>openReport(s)));
     if(canEdit()){
       if(s.status==="draft"){
         actions.append(action("Ubah judul",async()=>{const title=window.prompt("Judul survei (3–160 karakter):",s.title);if(title===null)return;const t=title.trim();if(t.length<3||t.length>160){say("Judul harus 3–160 karakter.");return;}await updateSurvey(s,{title:t});}));
@@ -42,6 +43,25 @@ async function updateSurvey(s,patch){
   const {error}=await client.from("surveys").update(patch).eq("id",s.id).eq("organization_id",$("org-select").value);
   if(error){say("Gagal menyimpan: "+(error.code||error.message));return;}
   say("Perubahan tersimpan.");await loadSurveys();
+}
+async function openReport(s){
+  activeSurvey=null;
+  $("question-panel").hidden=false;
+  $("question-heading").textContent="Laporan: "+s.title;
+  $("question-form").hidden=true;
+  const root=$("question-list");root.replaceChildren();
+  root.append(el("p","Memuat ringkasan...","admin-meta"));
+  const {data,error}=await client.rpc("gima_survey_summary",{p_survey_id:s.id});
+  root.replaceChildren();
+  if(error){root.append(el("p","Laporan belum tersedia. Jalankan SQL Tahap 7 terlebih dahulu. ("+(error.code||"error")+")","admin-meta"));return;}
+  if(!data?.length){root.append(el("p","Belum ada pertanyaan.","admin-meta"));return;}
+  for(const q of data){
+    const line=el("div",undefined,"admin-question");
+    const count=Number(q.response_count)||0;
+    line.append(el("span",q.question_prompt),el("strong",count>=5?"Rata-rata "+Number(q.average_score).toFixed(2)+"/5":"Belum cukup respons (minimum 5)"));
+    root.append(line);
+  }
+  $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function openQuestions(s){
   activeSurvey=s;$("question-panel").hidden=false;$("question-heading").textContent="Pertanyaan: "+s.title;
