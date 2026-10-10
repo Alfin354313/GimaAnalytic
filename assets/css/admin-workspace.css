@@ -84,3 +84,19 @@
 .commercial-checklist{margin-top:16px}.commercial-checklist h3{font-size:15px;margin:0 0 8px}.commercial-checklist ul{list-style:none;padding:0;margin:0}.commercial-checklist li{font-size:13px;padding:6px 0}.commercial-complete{color:#176e55}.commercial-pending{color:#6a7783}@media print{#commercial-panel{display:none!important}}
 
 #billing-panel h3{font-size:16px;margin:20px 0 10px}.billing-form{display:grid;gap:10px;padding:12px;border:1px solid #e0ebf0;border-radius:10px}.billing-form label{font-size:12px;font-weight:650}.billing-form input,.billing-form select{display:block;width:100%;margin-top:5px}.billing-form button,.billing-record button{padding:10px;border:0;border-radius:8px;background:#215d92;color:white;cursor:pointer}.billing-form button:disabled{opacity:.5}.billing-record{font-size:13px;padding:10px 0;border-bottom:1px solid #e0ebf0;overflow-wrap:anywhere}.billing-record button{display:block;margin-top:8px;font-size:12px}@media print{#billing-panel{display:none!important}}
+
+
+/* Finance overview and payment history */
+.finance-dashboard{margin:20px 0 26px;padding:18px;border:1px solid #d7e9ec;border-radius:14px;background:#f8fcff}
+.finance-dashboard h3{margin:0 0 14px}
+.finance-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.finance-stat{display:flex;flex-direction:column;gap:7px;padding:14px;border:1px solid #d7e9ec;background:#fff;border-radius:12px}
+.finance-stat small{color:#55707c;font-size:12px}
+.finance-stat strong{font-size:clamp(15px,2vw,21px);color:#135b87;overflow-wrap:anywhere}
+.finance-filters{display:grid;grid-template-columns:1fr 190px;gap:10px;margin:16px 0}
+.finance-filters input,.finance-filters select{width:100%;min-width:0}
+.finance-history h4,.finance-monthly h4{margin:18px 0 9px}
+.finance-history-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 0;border-bottom:1px solid #dceaf0}
+.finance-history-row strong{overflow-wrap:anywhere}
+.finance-history-row span{color:#506d7c;font-size:13px;overflow-wrap:anywhere}
+@media(max-width:700px){.finance-stats{grid-template-columns:1fr}.finance-filters{grid-template-columns:1fr}}
