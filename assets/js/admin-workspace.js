@@ -17,7 +17,280 @@ async function loadSurveys(){
   $("org-role").textContent="Peran: "+role();
   $("create-panel").hidden=!canEdit();
   renderSurveys();
+  window.gimaFeatureClient=client;
+  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status}))}}));
   await loadMembers(orgId);
+  renderCommercialReadiness(orgId);
+  await renderBilling(orgId);
+}
+async function renderBilling(orgId){
+  const panel=$("billing-panel"),root=$("billing-content");if(!panel||!root)return;
+  panel.hidden=!canEdit();if(panel.hidden)return;
+  root.replaceChildren(el("p","Memuat kontrak dan tagihan...","admin-meta"));
+  const [contractsResult,invoicesResult,paymentsResult]=await Promise.all([
+    client.from("client_contracts").select("id,client_name,reference,amount_idr,starts_on,ends_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,issued_on,due_on,status,payment_method,payment_instructions").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_payments").select("id,invoice_id,amount_idr,paid_on,transfer_reference,status").eq("organization_id",orgId).limit(500)
+  ]);
+  if($("org-select").value!==orgId)return;
+  root.replaceChildren();
+  const error=contractsResult.error||invoicesResult.error||paymentsResult.error;
+  if(error){root.append(el("p","Modul tagihan belum tersedia di database atau akses ditolak. Jalankan migrasi Tahap 14 setelah ditinjau: "+(error.code||error.message),"admin-meta"));return;}
+  const contracts=contractsResult.data||[],invoices=invoicesResult.data||[],payments=paymentsResult.data||[];
+  const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  const verifiedByInvoice=new Map();
+  for(const p of payments){
+    if(p.status==="verified")verifiedByInvoice.set(p.invoice_id,(verifiedByInvoice.get(p.invoice_id)||0)+Number(p.amount_idr));
+  }
+  const activeInvoices=invoices.filter(i=>i.status!=="void");
+  const billed=activeInvoices.reduce((sum,i)=>sum+Number(i.amount_idr),0);
+  const paid=activeInvoices.reduce((sum,i)=>sum+Math.min(Number(i.amount_idr),verifiedByInvoice.get(i.id)||0),0);
+  const outstanding=Math.max(0,billed-paid);
+  const finance=el("section",undefined,"finance-dashboard");
+  finance.append(el("h3","Dashboard Keuangan & Riwayat Pembayaran"));
+  const stats=el("div",undefined,"finance-stats");
+  const moneyFinance=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  for(const [label,value] of [["Total Tagihan",billed],["Sudah Dibayar (Terverifikasi)",paid],["Sisa Piutang",outstanding]]){
+    const card=el("div",undefined,"finance-stat");card.append(el("small",label),el("strong",moneyFinance(value)));stats.append(card);
+  }
+  finance.append(stats);
+  const filters=el("div",undefined,"finance-filters");
+  const search=el("input");search.type="search";search.placeholder="Cari klien atau nomor invoice";search.setAttribute("aria-label","Cari klien atau nomor invoice");
+  const statusFilter=el("select");statusFilter.setAttribute("aria-label","Filter status invoice");
+  for(const [value,label] of [["all","Semua status"],["paid","Lunas"],["unpaid","Belum lunas"],["overdue","Lewat jatuh tempo"]]){
+    const option=el("option",label);option.value=value;statusFilter.append(option);
+  }
+  filters.append(search,statusFilter);finance.append(filters);
+  const invoiceHistory=el("div",undefined,"finance-history");finance.append(invoiceHistory);
+  const monthly=el("div",undefined,"finance-monthly");finance.append(monthly);
+  const renderFinance=()=>{
+    invoiceHistory.replaceChildren();monthly.replaceChildren();
+    const q=search.value.trim().toLocaleLowerCase("id");
+    const today=new Date().toISOString().slice(0,10);
+    const matching=activeInvoices.filter(i=>{
+      const contract=contracts.find(c=>c.id===i.contract_id);
+      const verified=verifiedByInvoice.get(i.id)||0;
+      const isPaid=verified>=Number(i.amount_idr);
+      const isOverdue=!isPaid&&i.due_on<today;
+      const matchStatus=statusFilter.value==="all"||(statusFilter.value==="paid"&&isPaid)||(statusFilter.value==="unpaid"&&!isPaid)||(statusFilter.value==="overdue"&&isOverdue);
+      return matchStatus&&((contract?.client_name||"")+" "+i.invoice_number).toLocaleLowerCase("id").includes(q);
+    });
+    invoiceHistory.append(el("h4","Daftar Invoice ("+matching.length+")"));
+    if(!matching.length)invoiceHistory.append(el("p","Tidak ada invoice yang cocok.","admin-meta"));
+    for(const i of matching){
+      const contract=contracts.find(c=>c.id===i.contract_id);
+      const verified=verifiedByInvoice.get(i.id)||0;
+      const label=verified>=Number(i.amount_idr)?"Lunas":i.due_on<today?"Terlambat":"Belum lunas";
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",i.invoice_number+" — "+(contract?.client_name||"Klien")));
+      row.append(el("span",moneyFinance(i.amount_idr)+" • Terbayar "+moneyFinance(verified)+" • "+label+" • Jatuh tempo "+i.due_on));
+      invoiceHistory.append(row);
+    }
+    monthly.append(el("h4","Pemasukan Bulanan (Pembayaran Terverifikasi)"));
+    const grouped=new Map();
+    for(const p of payments.filter(p=>p.status==="verified")){
+      const month=String(p.paid_on||"").slice(0,7);
+      if(/^\\d{4}-\\d{2}$/.test(month))grouped.set(month,(grouped.get(month)||0)+Number(p.amount_idr));
+    }
+    if(!grouped.size)monthly.append(el("p","Belum ada pembayaran terverifikasi.","admin-meta"));
+    for(const [month,total] of [...grouped].sort((a,b)=>b[0].localeCompare(a[0]))){
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",month),el("span",moneyFinance(total)));monthly.append(row);
+    }
+    const payHistory=el("div",undefined,"finance-payment-history");
+    payHistory.append(el("h4","Riwayat Pembayaran"));
+    for(const p of [...payments].sort((a,b)=>String(b.paid_on).localeCompare(String(a.paid_on)))){
+      const inv=invoices.find(i=>i.id===p.invoice_id);
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",(inv?.invoice_number||"Invoice")+" — "+p.paid_on));
+      row.append(el("span",moneyFinance(p.amount_idr)+" • "+p.status+" • "+p.transfer_reference));
+      payHistory.append(row);
+    }
+    monthly.append(payHistory);
+  };
+  search.addEventListener("input",renderFinance);
+  statusFilter.addEventListener("change",renderFinance);
+  renderFinance();
+  root.append(finance);
+  const title=(t)=>root.append(el("h3",t));
+  const form=(fields,buttonLabel,onSubmit)=>{
+    const f=el("form",undefined,"billing-form");const inputs={};
+    for(const [key,label,type,options] of fields){
+      const wrap=el("label",label);const input=el(type==="select"?"select":"input");
+      if(type==="select"){for(const [value,text] of options||[]){const o=el("option",text);o.value=value;input.append(o);}}
+      else input.type=type;
+      input.required=true;if(type==="number"){input.min="1";input.step="1";}
+      wrap.append(input);f.append(wrap);inputs[key]=input;
+    }
+    const button=el("button",buttonLabel);button.type="submit";f.append(button);
+    const notice=el("p",undefined,"admin-meta");notice.setAttribute("role","status");f.append(notice);
+    f.addEventListener("submit",async e=>{
+      e.preventDefault();button.disabled=true;notice.textContent="Menyimpan...";
+      try{const result=await onSubmit(Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.value])));
+        if(result.error){notice.textContent="Gagal menyimpan: "+(result.error.code||result.error.message);return;}
+        await renderBilling(orgId);
+      }finally{button.disabled=false;}
+    });root.append(f);
+  };
+
+  const openDocument=(invoice,contract,verified,paid)=>{
+    const popup=window.open("","_blank");
+    if(!popup){say("Izinkan pop-up browser untuk mencetak PDF.");return;}
+    const doc=popup.document;
+    doc.title=(paid?"Bukti-Lunas-":"Invoice-")+invoice.invoice_number;
+    const style=doc.createElement("style");
+    style.textContent="*{box-sizing:border-box}body{font:14px/1.65 Arial,sans-serif;color:#1b3547;max-width:800px;margin:36px auto;padding:0 30px}.head{display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:3px solid #1673b6;padding-bottom:20px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:56px;height:56px;object-fit:contain}.brand strong{display:block;font-size:23px;color:#174f84}.brand small{display:block;color:#587183}.eyebrow{font-size:12px;font-weight:bold;letter-spacing:1px;color:#47728c}.meta{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:26px 0}.meta p{margin:4px 0}h1{font-size:27px;color:#174f84;margin:26px 0 8px}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{padding:12px;border-bottom:1px solid #dce7ef;text-align:left}th{background:#f1f7fc;color:#245578}.amount{font-size:22px;font-weight:bold;color:#174f84}.paid{display:inline-block;padding:8px 18px;border:2px solid #18804d;color:#18804d;font-size:21px;font-weight:bold;letter-spacing:2px}.unpaid{color:#a35816;font-weight:bold}.foot{border-top:1px solid #dce7ef;margin-top:36px;padding-top:16px;color:#5b7282;font-size:12px}.print{margin-top:24px;border:0;border-radius:8px;padding:12px 20px;background:#146fa8;color:white;cursor:pointer}@media print{@page{size:A4;margin:16mm}.print{display:none}body{margin:0;padding:0;max-width:none}h1{break-after:avoid}table{break-inside:avoid}}";
+    doc.head.append(style);
+    const add=(parent,tag,value,cls)=>{const node=doc.createElement(tag);node.textContent=value;if(cls)node.className=cls;parent.append(node);return node;};
+    const head=add(doc.body,"header",undefined,"head");
+    const brand=add(head,"div",undefined,"brand");
+    const logo=doc.createElement("img");logo.src=new URL("/assets/giandra-maheswara-logo.svg",window.location.origin).href;logo.alt="Logo GIMA Analytics";brand.append(logo);
+    const brandText=doc.createElement("div");brand.append(brandText);add(brandText,"strong","GIMA Analytics");add(brandText,"small","BY GIANDRA MAHESWARA");
+    add(head,"span",paid?"BUKTI PEMBAYARAN":"INVOICE","eyebrow");
+    add(doc.body,"h1",paid?"Bukti Pembayaran Lunas":"Invoice Tagihan");
+    const meta=add(doc.body,"section",undefined,"meta");
+    const left=doc.createElement("div"),right=doc.createElement("div");meta.append(left,right);
+    add(left,"p","Ditagihkan kepada:");
+    add(left,"strong",contract?.client_name||"Klien");
+    add(left,"p","Referensi kontrak: "+(contract?.reference||"—"));
+    add(right,"p","No. invoice: "+invoice.invoice_number);
+    add(right,"p","Tanggal terbit: "+(invoice.issued_on||"—"));
+    add(right,"p","Jatuh tempo: "+invoice.due_on);
+    const table=doc.createElement("table");doc.body.append(table);
+    const trHead=doc.createElement("tr");table.append(trHead);add(trHead,"th","Keterangan");add(trHead,"th","Jumlah");
+    for(const [label,value] of [["Layanan GIMA Analytics",money(invoice.amount_idr)],["Pembayaran terverifikasi",money(verified)],["Sisa tagihan",money(Math.max(0,Number(invoice.amount_idr)-verified))]]){
+      const tr=doc.createElement("tr");table.append(tr);add(tr,"td",label);add(tr,"td",value);
+    }
+    add(doc.body,"p","Total invoice: "+money(invoice.amount_idr),"amount");
+    if(paid){
+      add(doc.body,"p","LUNAS","paid");
+      add(doc.body,"p","Seluruh nilai tagihan telah dicatat sebagai pembayaran terverifikasi oleh Owner.");
+    }else{
+      add(doc.body,"p","BELUM LUNAS","unpaid");
+      add(doc.body,"p","Pembayaran dilakukan melalui transfer bank dan dikonfirmasi melalui WhatsApp pengelola. Mintalah detail rekening resmi sebelum transfer.");
+      if(invoice.payment_method==="bank_transfer"&&invoice.payment_instructions){
+        add(doc.body,"p","Petunjuk pembayaran: "+invoice.payment_instructions);
+      }
+    }
+    add(doc.body,"p","Dokumen ini dibuat secara elektronik dari catatan transaksi GIMA Analytics. Simpan PDF melalui menu cetak browser.","foot");
+    const button=add(doc.body,"button","Cetak / Simpan sebagai PDF","print");button.type="button";button.onclick=()=>popup.print();
+    popup.focus();
+  };
+
+  const deleteBilling=async(table,id,label)=>{
+    if(role()!=="owner")return;
+    if(!window.confirm("Hapus "+label+" secara permanen? Tindakan ini tidak bisa dibatalkan."))return;
+    const {data,error}=await client.from(table).delete().eq("id",id).eq("organization_id",orgId).select("id");
+    if(error){say("Gagal menghapus "+label+": "+(error.message||error.code));return;}
+    if(!data?.length){say("Data tidak terhapus. Periksa hak akses dan jalankan migrasi SQL 012.");return;}
+    say(label+" berhasil dihapus.");await renderBilling(orgId);
+  };
+  title("Kontrak Klien");
+  for(const c of contracts){
+    const row=el("div",undefined,"billing-record");
+    row.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status));
+    if(role()==="owner")row.append(action("Hapus Kontrak",()=>deleteBilling("client_contracts",c.id,"kontrak "+c.reference)));
+    root.append(row);
+  }
+  form([["client_name","Nama klien","text"],["reference","Nomor kontrak","text"],["amount_idr","Nilai kontrak (Rp)","number"],["starts_on","Mulai kontrak","date"]],
+    "Simpan Kontrak + Invoice Otomatis",v=>client.from("client_contracts").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
+  title("Invoice Otomatis — Jatuh Tempo 5 Hari");
+  root.append(el("p","Invoice otomatis dibuat saat kontrak disimpan. QRIS dan Virtual Account belum aktif sampai payment gateway terintegrasi.","admin-meta"));
+  for(const i of invoices){
+    const verified=payments.filter(p=>p.invoice_id===i.id&&p.status==="verified").reduce((sum,p)=>sum+Number(p.amount_idr),0);
+    const item=el("div",undefined,"billing-record");
+    item.append(el("p",i.invoice_number+" • "+money(i.amount_idr)+" • Jatuh tempo "+i.due_on+" • Terverifikasi "+money(verified)+" • "+i.status));
+    const method=el("select");
+    for(const [value,label] of [["bank_transfer","Transfer bank manual"],["qris","QRIS (belum aktif)"],["virtual_account","Virtual Account (belum aktif)"]]){
+      const opt=el("option",label);opt.value=value;method.append(opt);
+    }
+    method.value=i.payment_method||"bank_transfer";
+    const note=el("input");note.type="text";note.maxLength=300;note.placeholder="Instruksi pembayaran / rekening bisnis";note.value=i.payment_instructions||"";
+    const save=action("Simpan metode pembayaran",async()=>{
+      if(method.value!=="bank_transfer"&&!window.confirm("QRIS/VA belum terintegrasi; metode ini belum bisa menerima pembayaran. Lanjutkan?"))return;
+      const {error}=await client.from("client_invoices").update({payment_method:method.value,payment_instructions:note.value.trim()}).eq("id",i.id).eq("organization_id",orgId);
+      if(error){say("Gagal menyimpan metode: "+(error.code||error.message));return;}
+      await renderBilling(orgId);
+    });
+    item.append(method,note,save);
+    const contract=contracts.find(c=>c.id===i.contract_id);
+    item.append(action("Invoice PDF",()=>openDocument(i,contract,verified,false)));
+    if(role()==="owner"&&!payments.some(p=>p.invoice_id===i.id)){
+      item.append(action("Hapus Invoice",()=>deleteBilling("client_invoices",i.id,"invoice "+i.invoice_number)));
+    }
+    if(verified>=Number(i.amount_idr)&&Number(i.amount_idr)>0){
+      item.append(action("Bukti Lunas PDF",()=>openDocument(i,contract,verified,true)));
+    }
+    item.append(action("Kirim via WhatsApp",()=>{
+      const number=window.prompt("Nomor WhatsApp klien (contoh: 6281234567890). PDF dikirim sebagai lampiran secara manual:");
+      if(number===null)return;
+      const normalized=number.replace(/[^0-9]/g,"").replace(/^0/,"62");
+      if(!/^62[0-9]{8,13}$/.test(normalized)){say("Nomor WhatsApp tidak valid.");return;}
+      const label=verified>=Number(i.amount_idr)?"Bukti pembayaran lunas":"Invoice tagihan";
+      const msg=label+" GIMA Analytics "+i.invoice_number+" untuk "+(contract?.client_name||"klien")+". Nilai: "+money(i.amount_idr)+". Jatuh tempo: "+i.due_on+". Dokumen PDF akan kami kirim sebagai lampiran.";
+      window.open("https://wa.me/"+normalized+"?text="+encodeURIComponent(msg),"_blank","noopener,noreferrer");
+    }));
+    root.append(item);
+  }
+  title("Pembayaran Transfer Manual");
+  for(const p of payments){
+    const invoice=invoices.find(i=>i.id===p.invoice_id);
+    const row=el("div",undefined,"billing-record");
+    row.append(el("span",(invoice?.invoice_number||"Invoice")+" • "+money(p.amount_idr)+" • "+p.status+" • "+p.transfer_reference));
+    if(role()==="owner"&&p.status==="pending"){
+      const confirm=action("Verifikasi",async()=>{
+        if(!window.confirm("Pastikan dana benar-benar sudah diterima di rekening sebelum verifikasi."))return;
+        const {error}=await client.from("client_payments").update({status:"verified"}).eq("id",p.id).eq("organization_id",orgId);
+        if(error){say("Gagal verifikasi pembayaran: "+(error.code||error.message));return;}
+        await renderBilling(orgId);
+      });row.append(confirm);
+    }
+    if(role()==="owner"&&p.status==="pending"){
+      row.append(action("Hapus Pembayaran",()=>deleteBilling("client_payments",p.id,"pembayaran pending "+p.transfer_reference)));
+    }
+    root.append(row);
+  }
+  if(invoices.length)form([
+    ["invoice_id","Invoice","select",invoices.filter(i=>i.status!=="void").map(i=>[i.id,i.invoice_number])],
+    ["amount_idr","Jumlah transfer (Rp)","number"],["paid_on","Tanggal transfer","date"],["transfer_reference","Referensi transfer","text"]
+  ],"Catat Pembayaran (Menunggu Verifikasi)",v=>client.from("client_payments").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr),status:"pending"}));
+  root.append(el("p","Pencatatan ini tidak memindahkan dana, tidak mengirim invoice otomatis, dan tidak membuktikan pembayaran sebelum diverifikasi pemilik.","admin-meta"));
+}
+function renderCommercialReadiness(orgId){
+  const root=$("commercial-content");if(!root)return;
+  root.replaceChildren();
+  const org=orgs.find(o=>o.id===orgId);if(!org)return;
+  const draft=surveys.filter(s=>s.status==="draft").length;
+  const published=surveys.filter(s=>s.status==="published").length;
+  const closed=surveys.filter(s=>s.status==="closed").length;
+  const metrics=[["Survei draft",draft],["Survei aktif",published],["Survei selesai",closed]];
+  for(const [name,value] of metrics){const line=el("div",undefined,"admin-stat");line.append(el("span",name),el("strong",String(value)));root.append(line);}
+  const checklist=el("div",undefined,"commercial-checklist");
+  checklist.append(el("h3","Checklist Operasional"));
+  const items=[
+    ["Akun organisasi aktif",true],
+    ["Setidaknya satu survei dibuat",surveys.length>0],
+    ["Survei pernah dipublikasikan",published+closed>0],
+    ["Laporan dan izin akses sudah ditinjau",false],
+    ["Persetujuan klien, privasi, dan retensi sudah diverifikasi",false]
+  ];
+  const list=el("ul");
+  for(const [label,complete] of items){const item=el("li",(complete?"✓ ":"○ ")+label);item.className=complete?"commercial-complete":"commercial-pending";list.append(item);}
+  checklist.append(list);
+  checklist.append(el("p","Dua pemeriksaan terakhir wajib dilakukan secara manual. Checklist ini tidak menyatakan organisasi sudah siap produksi.","admin-meta"));
+  root.append(checklist);
+  if(["owner","admin"].includes(org.role)){
+    const button=action("Unduh Rekap Survei (CSV)",()=>{
+      const csvCell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
+      const rows=[["Organisasi","Judul survei","Status","Dibuat pada"],...surveys.map(s=>[org.name,s.title,s.status,s.created_at||""])];
+      const content="\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n");
+      const blob=new Blob([content],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download="gima-rekap-survei.csv";document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    button.className="member-export";root.append(button);
+  }
 }
 async function loadMembers(orgId){
   const root=$("member-list");if(!root)return;
@@ -144,6 +417,38 @@ async function openReport(s){
   executive.append(kpis);
   executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Perbandingan hanya dapat dibuat dari pertanyaan yang identik dan memenuhi ambang privasi.","admin-meta"));
   root.append(executive);
+  const cover=el("section",undefined,"professional-cover");
+  cover.append(el("p","GIMA ANALYTICS | LAPORAN ORGANISASI","professional-eyebrow"));
+  cover.append(el("h2",s.title));
+  cover.append(el("p","Laporan agregat hasil survei • "+new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}),"admin-meta"));
+  const org=orgs.find(o=>o.id===s.organization_id);
+  cover.append(el("p","Organisasi: "+(org?.name||"Organisasi terkait"),"admin-meta"));
+  cover.append(el("p","Disusun dari hasil survei yang tersedia pada saat laporan dibuat. Angka dengan kurang dari 5 respons valid per pertanyaan disembunyikan.","admin-meta"));
+  root.insertBefore(cover,root.firstChild);
+  const method=el("section",undefined,"professional-method");
+  method.append(el("h3","Metodologi dan Batasan"));
+  const methodList=el("ul");
+  for(const line of [
+    "Skala pengukuran: Likert 1 sampai 5 untuk setiap pertanyaan.",
+    "Skor agregat merupakan rata-rata skor pertanyaan yang lolos ambang minimum 5 respons; bukan rata-rata seluruh karyawan.",
+    "Pertanyaan dengan kurang dari 5 respons valid tidak ditampilkan untuk menjaga privasi.",
+    "Hasil bersifat deskriptif; tidak membuktikan hubungan sebab-akibat dan tidak otomatis mewakili seluruh organisasi.",
+    "Rekomendasi adalah titik awal diskusi, bukan keputusan otomatis tentang individu atau karyawan."
+  ])methodList.append(el("li",line));
+  method.append(methodList);root.append(method);
+  const checklist=el("section",undefined,"professional-checklist");
+  checklist.append(el("h3","Checklist Sebelum Laporan Dibagikan"));
+  const items=[
+    "Pastikan nama organisasi dan judul survei sudah benar.",
+    "Periksa kembali pertanyaan dengan skor rendah dan konteks organisasinya.",
+    "Hindari menyimpulkan identitas responden dari kelompok kecil.",
+    "Konfirmasi rekomendasi dengan pemangku kepentingan sebelum implementasi."
+  ];
+  const checks=el("ul");for(const item of items)checks.append(el("li",item));
+  checklist.append(checks);
+  checklist.append(el("p","Checklist ini panduan internal dan tidak menggantikan validasi profesional.","admin-meta"));
+  root.append(checklist);
+  const reportFooter=el("p","GIMA Analytics • Dokumen ringkasan survei • "+new Date().toLocaleDateString("id-ID"),"professional-report-footer");
   const printButton=action("Cetak / Simpan PDF",()=>window.print());
   printButton.className="report-download report-print-button";
   root.append(printButton);
@@ -211,6 +516,7 @@ async function openReport(s){
     plan.className="report-download";advice.append(plan);
     root.append(advice);
   }
+  root.append(reportFooter);
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function renderPeriodComparison(root,current,currentData){
