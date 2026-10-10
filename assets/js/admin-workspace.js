@@ -87,6 +87,19 @@ async function openReport(s){
     list.append(item);
   }
   root.append(list);
+  if(ready.length>=2){
+    const ranked=[...ready].sort((a,b)=>Number(b.average_score)-Number(a.average_score));
+    const insights=el("section",undefined,"report-insights");
+    insights.append(el("h3","Insight Otomatis"));
+    const high=ranked[0],low=ranked[ranked.length-1];
+    const intro=el("p","Ringkasan deskriptif berdasarkan rata-rata skor pertanyaan yang memenuhi minimum 5 respons. Ini bukan diagnosis organisasi.","admin-meta");
+    insights.append(intro);
+    const best=el("p");best.append(el("strong","Skor tertinggi: "),document.createTextNode(high.question_prompt+" ("+Number(high.average_score).toFixed(2)+"/5)."));insights.append(best);
+    const worst=el("p");worst.append(el("strong","Skor terendah: "),document.createTextNode(low.question_prompt+" ("+Number(low.average_score).toFixed(2)+"/5)."));insights.append(worst);
+    const diff=Number(high.average_score)-Number(low.average_score);
+    insights.append(el("p","Selisih skor tertinggi dan terendah: "+diff.toFixed(2)+" poin. Tinjau pertanyaan dengan skor rendah bersama konteks organisasi sebelum menentukan tindakan.","admin-meta"));
+    root.append(insights);
+  }
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
 }
 function downloadReport(s,data){
