@@ -32,3 +32,19 @@ Menyiapkan struktur organisasi, anggota, survei, dan pertanyaan untuk GIMA Analy
 - Baru kemudian desain respons anonim, consent, rate limiting, retention, dan batas agregasi.
 
 **Penting:** Migrasi ini hanya disimpan sebagai kode di branch preview. Belum dieksekusi di database apa pun.
+
+## Portal login admin (ditambahkan pada branch preview)
+- `/login`: formulir email/password Supabase Auth.
+- `/admin`: memeriksa user login dan hanya menampilkan organisasi yang terdaftar pada `organization_members`.
+- `assets/js/supabase-config.js`: isi `url` dan `publishableKey` proyek **GIMA Analytics**, bukan proyek lain. **Jangan pernah memasukkan service_role / secret key**.
+- `assets/js/auth-client.js`: wrapper klien Supabase browser.
+- `assets/js/login.js`, `assets/js/admin.js`: logika halaman terpisah.
+- `assets/css/auth.css`: styling portal admin.
+
+### Hal penting sebelum uji login
+1. Pastikan email/password Supabase Auth diaktifkan, dan buat pengguna melalui Supabase Dashboard. Pastikan email terverifikasi sesuai konfigurasi.
+2. Setelah login, akun yang belum punya baris keanggotaan hanya mendapat pesan 'belum menjadi anggota organisasi'. Ini disengaja.
+3. **Jangan menambahkan kebijakan INSERT ke tabel organisasi/anggota langsung dari browser.** Provisioning owner dan organisasi perlu backend tepercaya dan audit.
+4. File `admin.html` bersifat statis: UI disembunyikan sampai sesi dan membership diverifikasi. Pengamanan data **harus tetap pada RLS**, bukan hanya menyembunyikan UI.
+5. Uji halaman `/login` dan `/admin` di Vercel Preview. Belum ada koneksi Supabase yang aktif sampai konfigurasi publik diisi.
+6. Versi library Supabase dari CDN perlu ditinjau saat pengujian deploy; produksi sebaiknya menggunakan dependensi yang dipin dan kebijakan CSP yang sesuai.
