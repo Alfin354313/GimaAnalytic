@@ -144,6 +144,27 @@ async function openReport(s){
   executive.append(kpis);
   executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Perbandingan hanya dapat dibuat dari pertanyaan yang identik dan memenuhi ambang privasi.","admin-meta"));
   root.append(executive);
+  const cover=el("section",undefined,"professional-cover");
+  cover.append(el("p","GIMA ANALYTICS | LAPORAN ORGANISASI","professional-eyebrow"));
+  cover.append(el("h2",s.title));
+  cover.append(el("p","Laporan agregat hasil survei • "+new Date().toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}),"admin-meta"));
+  const org=orgs.find(o=>o.id===s.organization_id);
+  cover.append(el("p","Organisasi: "+(org?.name||"Organisasi terkait"),"admin-meta"));
+  cover.append(el("p","Disusun dari hasil survei yang tersedia pada saat laporan dibuat. Angka dengan kurang dari 5 respons valid per pertanyaan disembunyikan.","admin-meta"));
+  root.insertBefore(cover,root.firstChild);
+  const method=el("section",undefined,"professional-method");
+  method.append(el("h3","Metodologi dan Batasan"));
+  const methodList=el("ul");
+  for(const line of [
+    "Skala pengukuran: Likert 1 sampai 5 untuk setiap pertanyaan.",
+    "Skor agregat merupakan rata-rata skor pertanyaan yang lolos ambang minimum 5 respons; bukan rata-rata seluruh karyawan.",
+    "Pertanyaan dengan kurang dari 5 respons valid tidak ditampilkan untuk menjaga privasi.",
+    "Hasil bersifat deskriptif; tidak membuktikan hubungan sebab-akibat dan tidak otomatis mewakili seluruh organisasi.",
+    "Rekomendasi adalah titik awal diskusi, bukan keputusan otomatis tentang individu atau karyawan."
+  ])methodList.append(el("li",line));
+  method.append(methodList);root.append(method);
+  const reportFooter=el("p","GIMA Analytics • Dokumen ringkasan survei • "+new Date().toLocaleDateString("id-ID"),"professional-report-footer");
+  root.append(reportFooter);
   const printButton=action("Cetak / Simpan PDF",()=>window.print());
   printButton.className="report-download report-print-button";
   root.append(printButton);
