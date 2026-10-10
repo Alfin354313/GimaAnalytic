@@ -100,7 +100,7 @@ const setup=()=>{
       if(featureState.orgId!==id)return;
       summaries.push({survey,data:data||[],error});
     }
-    featureState.summaries=summaries;featureState.loading=false;renderFeatures();
+    featureState.summaries=summaries;featureState.loading=false;renderFeatures();renderExecutive();
   };
   const renderFeatures=()=>{
     const {respondents,analysis,reports,settings}=featurePanels;
@@ -207,7 +207,68 @@ const setup=()=>{
   const orgSelector=document.getElementById("org-select");
   if(orgSelector)orgSelector.addEventListener("change",()=>requestAnimationFrame(refreshKpis));
   refreshKpis();
-  overview.insertBefore(kpis,org);
+  // Executive metrics use only privacy-cleared survey summaries. No synthetic data.
+  const executive=document.createElement("div");executive.className="gima-executive";
+  const execCards=document.createElement("div");execCards.className="gima-exec-cards";
+  const visualGrid=document.createElement("div");visualGrid.className="gima-visual-grid";
+  executive.append(execCards,visualGrid);
+  const executiveCard=(label,value,description)=>{
+    const card=document.createElement("article");card.className="gima-exec-card";
+    const small=document.createElement("span");small.textContent=label;
+    const number=document.createElement("strong");number.textContent=value;
+    const note=document.createElement("small");note.textContent=description;
+    card.append(small,number,note);execCards.append(card);
+  };
+  const chartBox=(label,description)=>{
+    const card=document.createElement("section");card.className="gima-exec-chart";
+    const heading=document.createElement("h3");heading.textContent=label;
+    const note=document.createElement("p");note.className="admin-meta";note.textContent=description;
+    const body=document.createElement("div");body.className="gima-exec-chart-body";
+    card.append(heading,note,body);visualGrid.append(card);return body;
+  };
+  const renderExecutive=()=>{
+    execCards.replaceChildren();visualGrid.replaceChildren();
+    const summaries=(featureState.summaries||[]).filter(x=>!x.error);
+    const valid=summaries.flatMap(x=>x.data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null).map(q=>({...q,surveyTitle:x.survey.title})));
+    const avg=arr=>arr.length?arr.reduce((n,q)=>n+Number(q.average_score),0)/arr.length:null;
+    const percent=n=>n===null?"—":(n/5*100).toFixed(1)+"%";
+    const engagement=valid.filter(q=>/engage|keterlibatan|komitmen|motivasi|antusias|bangga/i.test(q.question_prompt));
+    const satisfaction=valid.filter(q=>/puas|kepuasan|satisfaction/i.test(q.question_prompt));
+    executiveCard("Total Responden","—","Jumlah unik belum tersedia sebagai agregat aman");
+    executiveCard("Engagement Score",percent(avg(engagement)),engagement.length+" pertanyaan terkait, skala Likert 1–5");
+    executiveCard("Tingkat Kepuasan",percent(avg(satisfaction)),satisfaction.length+" pertanyaan terkait, bukan persentase karyawan puas");
+    executiveCard("Turnover Rate","—","Memerlukan data HR karyawan keluar dan rata-rata headcount");
+    const trend=chartBox("Tren Engagement","Perbandingan periode hanya tersedia bila survei berulang memiliki pertanyaan yang sebanding.");
+    addNote(trend,"Belum tersedia seri waktu tervalidasi. Tidak menampilkan tren buatan.");
+    const dimension=chartBox("Skor per Dimensi","Pengelompokan indikatif berdasarkan kata kunci pertanyaan, bukan dimensi yang sudah divalidasi.");
+    const buckets=[
+      ["Kepemimpinan",/pimpin|atasan|supervisor|manajer/i],
+      ["Lingkungan Kerja",/lingkungan|fasilitas|budaya|rekan/i],
+      ["Pengembangan",/karier|karir|pelatihan|pengembang|promosi/i],
+      ["Kompensasi",/kompensasi|gaji|insentif|tunjangan/i],
+      ["Work-Life Balance",/beban kerja|work.life|keseimbangan/i]
+    ];
+    let plotted=0;
+    for(const [label,pattern] of buckets){
+      const values=valid.filter(q=>pattern.test(q.question_prompt));
+      const score=avg(values);if(score===null)continue;plotted++;
+      const row=document.createElement("div");row.className="gima-exec-bar-row";
+      const name=document.createElement("span");name.textContent=label;
+      const track=document.createElement("div");track.className="gima-feature-track";
+      const fill=document.createElement("i");fill.style.width=Math.max(0,Math.min(100,score*20))+"%";track.append(fill);
+      const value=document.createElement("b");value.textContent=score.toFixed(2)+"/5";
+      row.append(name,track,value);dimension.append(row);
+    }
+    if(!plotted)addNote(dimension,"Belum ada pertanyaan yang memenuhi ambang privasi dan kategori dimensi.");
+    const distribution=chartBox("Distribusi Responden","Memerlukan kategori responden agregat dan izin akses yang sesuai.");
+    addNote(distribution,"Data distribusi jabatan atau unit kerja belum tersedia. Tidak menampilkan identitas atau proporsi rekaan.");
+    const sentiment=chartBox("Sentimen Karyawan","Analisis sentimen memerlukan jawaban teks dan metode klasifikasi yang jelas.");
+    addNote(sentiment,"Belum tersedia analisis sentimen terverifikasi. Skor Likert tidak otomatis berarti sentimen positif atau negatif.");
+  };
+  document.addEventListener("gima:surveys-loaded",()=>requestAnimationFrame(renderExecutive));
+  renderExecutive();
+  overview.insertBefore(executive,org);
+
   const dashboardGrid=document.createElement("div");dashboardGrid.className="gima-overview-grid";
   overview.append(dashboardGrid);dashboardGrid.append(org,readiness);
   const orgHeading=org.querySelector("h2");if(orgHeading)orgHeading.textContent="Organisasi & Pengaturan";
