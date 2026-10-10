@@ -78,8 +78,9 @@ async function openReport(s){
   const lowQuestions=ready.filter(q=>Number(q.average_score)<3);
   metric("Area perlu ditinjau",ready.length?String(lowQuestions.length):"—","Pertanyaan dengan skor di bawah 3/5");
   executive.append(kpis);
-  executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Tren waktu belum tersedia karena belum ada pembandingan survei antarperiode.","admin-meta"));
+  executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Perbandingan hanya dapat dibuat dari pertanyaan yang identik dan memenuhi ambang privasi.","admin-meta"));
   root.append(executive);
+  renderPeriodComparison(root,s,data);
   if(ready.length){
     const overall=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
     const card=el("div",undefined,"report-score");
@@ -144,6 +145,64 @@ async function openReport(s){
     root.append(advice);
   }
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderPeriodComparison(root,current,currentData){
+  const section=el("section",undefined,"period-comparison");
+  section.append(el("h3","Perbandingan Antar Survei"));
+  section.append(el("p","Pilih survei lain dari organisasi yang sama. Hanya pertanyaan dengan teks persis sama, tidak duplikat, dan minimal 5 respons valid pada kedua survei yang dibandingkan. Skala keduanya Likert 1–5.","admin-meta"));
+  const candidates=surveys.filter(s=>s.id!==current.id&&s.status!=="draft");
+  if(!candidates.length){
+    section.append(el("p","Belum ada survei pembanding yang dipublikasikan atau ditutup. Buat survei periode berikutnya dengan pertanyaan identik untuk mengaktifkan perbandingan.","admin-meta"));
+    root.append(section);return;
+  }
+  const label=el("label","Survei pembanding");const select=el("select");
+  select.setAttribute("aria-label","Survei pembanding");
+  const placeholder=el("option","Pilih survei pembanding");placeholder.value="";select.append(placeholder);
+  for(const item of candidates){const option=el("option",item.title);option.value=item.id;select.append(option);}
+  section.append(label,select);
+  const result=el("div",undefined,"period-results");section.append(result);
+  let requestId=0;
+  select.addEventListener("change",async()=>{
+    const selectedId=select.value;const seq=++requestId;result.replaceChildren();
+    if(!selectedId)return;
+    result.append(el("p","Memuat perbandingan...","admin-meta"));
+    const {data,error}=await client.rpc("gima_survey_summary",{p_survey_id:selectedId});
+    if(seq!==requestId)return;
+    result.replaceChildren();
+    if(error){result.append(el("p","Gagal memuat survei pembanding: "+(error.code||error.message),"admin-meta"));return;}
+    const normalize=q=>String(q.question_prompt||"").trim().replace(/\\s+/g," ").toLocaleLowerCase("id-ID");
+    const currentMap=new Map(),otherMap=new Map();
+    for(const [items,map] of [[currentData,currentMap],[data||[],otherMap]]){
+      for(const q of items){const key=normalize(q);if(!map.has(key))map.set(key,[]);map.get(key).push(q);}
+    }
+    const pairs=[];
+    for(const [key,a] of currentMap){
+      const b=otherMap.get(key);
+      if(a.length!==1||!b||b.length!==1)continue;
+      const left=a[0],right=b[0];
+      if(Number(left.response_count)<5||Number(right.response_count)<5||left.average_score===null||right.average_score===null)continue;
+      pairs.push({prompt:left.question_prompt,current:Number(left.average_score),previous:Number(right.average_score)});
+    }
+    if(!pairs.length){
+      result.append(el("p","Belum ada pertanyaan identik yang memenuhi minimal 5 respons pada kedua survei. Tidak ada skor yang dibandingkan.","admin-meta"));return;
+    }
+    const other=candidates.find(x=>x.id===selectedId);
+    result.append(el("p","Selisih = skor survei saat ini dikurangi skor "+(other?.title||"pembanding")+". Nilai positif berarti lebih tinggi pada survei saat ini.","admin-meta"));
+    const average=pairs.reduce((acc,p)=>acc+p.current-p.previous,0)/pairs.length;
+    const top=el("div",undefined,"period-delta");
+    top.append(el("span","Rata-rata selisih "+pairs.length+" pertanyaan sepadan"),el("strong",(average>0?"+":"")+average.toFixed(2)+" poin"));
+    result.append(top);
+    for(const p of pairs){
+      const line=el("div",undefined,"period-row");
+      line.append(el("strong",p.prompt));
+      line.append(el("span","Pembanding "+p.previous.toFixed(2)+" / 5 → Saat ini "+p.current.toFixed(2)+" / 5"));
+      const delta=p.current-p.previous;
+      line.append(el("span","Selisih "+(delta>0?"+":"")+delta.toFixed(2)+" poin","admin-meta"));
+      result.append(line);
+    }
+    result.append(el("p","Perbandingan ini deskriptif. Perbedaan waktu, responden, dan metode pengumpulan dapat memengaruhi hasil. Pertanyaan dengan teks berbeda tidak dibandingkan.","admin-meta"));
+  });
+  root.append(section);
 }
 function downloadActionPlan(s,priority,actions){
   const cell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
