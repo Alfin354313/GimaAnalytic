@@ -37,3 +37,5 @@
 #members-panel .admin-stat strong{font-size:18px}
 
 .member-permissions{margin-top:18px}.member-permissions h3{font-size:16px;margin:0 0 10px}.member-permission-table{width:100%;border-collapse:collapse;font-size:12px}.member-permission-table th,.member-permission-table td{padding:9px 5px;text-align:left;border-bottom:1px solid #dcebf0}.member-permission-table th{color:#31566b}.member-export{margin-top:12px;border:1px solid #b8d6dd;background:#fff;border-radius:8px;padding:9px 12px;color:#174e7d;cursor:pointer;font:inherit;font-size:13px}@media print{#members-panel{display:none!important}}
+
+.member-add-form{margin-top:16px;padding-top:14px;border-top:1px solid #dcebf0;display:grid;gap:9px}.member-add-form h3{font-size:16px;margin:0}.member-add-form input,.member-add-form select{width:100%;min-width:0;padding:10px;border:1px solid #bad6df;border-radius:8px;font:inherit}.member-add-form button{background:#215d92;color:white;border:0;border-radius:8px;padding:11px;cursor:pointer}.member-add-form button:disabled{opacity:.6}
