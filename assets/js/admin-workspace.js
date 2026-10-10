@@ -17,7 +17,8 @@ async function loadSurveys(){
   $("org-role").textContent="Peran: "+role();
   $("create-panel").hidden=!canEdit();
   renderSurveys();
-  document.dispatchEvent(new Event("gima:surveys-loaded"));
+  window.gimaFeatureClient=client;
+  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status}))}}));
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
   await renderBilling(orgId);
