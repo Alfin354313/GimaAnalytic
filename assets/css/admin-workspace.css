@@ -80,3 +80,5 @@
  .report-chart{break-inside:auto!important}
  .report-item{break-inside:avoid!important;page-break-inside:avoid!important}
 }
+
+.commercial-checklist{margin-top:16px}.commercial-checklist h3{font-size:15px;margin:0 0 8px}.commercial-checklist ul{list-style:none;padding:0;margin:0}.commercial-checklist li{font-size:13px;padding:6px 0}.commercial-complete{color:#176e55}.commercial-pending{color:#6a7783}@media print{#commercial-panel{display:none!important}}
