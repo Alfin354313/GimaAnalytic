@@ -1,1 +1,44 @@
 .auth-page{background:#f5fbfc;min-height:78vh}.auth-shell{max-width:550px;margin:0 auto}.auth-card{background:#fff;border:1px solid #d7e9ec;border-radius:18px;padding:30px;margin-top:26px}.auth-card label{display:block;font-weight:700;font-size:14px;margin:16px 0 6px}.auth-card input{width:100%;padding:12px;border:1px solid #bdd8dc;border-radius:9px;font:inherit}.auth-card input:focus{outline:2px solid #20b2b8;outline-offset:2px}.auth-card button{margin-top:20px;cursor:pointer}.auth-card button:disabled{opacity:.55;cursor:not-allowed}.auth-note{font-size:13px;color:#526e78}.admin-list{padding-left:22px}.admin-list li{margin:8px 0}.auth-card[hidden],button[hidden]{display:none}@media(max-width:600px){.auth-card{padding:20px}}
+
+/* Reference-inspired GIMA login: scoped to the login page */
+.gima-login-body{margin:0;min-height:100vh;background:#e8f8fc}
+.gima-login-page{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:52px 20px 76px;overflow:hidden;background:linear-gradient(135deg,#d4f1f8 0%,#f2fbff 50%,#e4f7fc 100%)}
+.gima-login-page:before,.gima-login-page:after{content:"";position:absolute;z-index:-1;pointer-events:none;border-radius:42% 58% 35% 65%;transform:rotate(-28deg)}
+.gima-login-page:before{width:65vw;height:45vw;min-width:420px;min-height:330px;left:-27vw;top:-16vw;background:linear-gradient(130deg,#80cddf,#d0f3fa)}
+.gima-login-page:after{width:52vw;height:34vw;min-width:360px;min-height:280px;right:-25vw;bottom:-16vw;background:linear-gradient(130deg,#a1e2eb,#d6f5fa)}
+.gima-login-decoration{position:absolute;z-index:-1;pointer-events:none;opacity:.75}
+.gima-login-decoration-left{left:-8%;bottom:12%;width:40%;height:35%;background:#b8e9f2;clip-path:polygon(0 35%,45% 0,80% 56%,100% 22%,100% 70%,40% 100%,0 75%)}
+.gima-login-decoration-right{right:-6%;top:6%;width:33%;height:33%;background:#b7e5f1;clip-path:polygon(0 45%,65% 0,100% 15%,100% 90%,70% 100%,32% 70%)}
+.gima-login-card{width:100%;max-width:470px;background:#fff;border:1px solid #dceef2;border-radius:18px;padding:clamp(26px,4vw,45px);box-shadow:0 18px 65px rgba(16,81,108,.11);color:#18384e}
+.gima-login-brand{display:flex;align-items:center;justify-content:center;gap:12px;text-decoration:none;color:#102d3e;margin:0 auto 26px}
+.gima-login-brand img{width:65px;height:65px;object-fit:contain}
+.gima-login-brand strong{font-size:18px;line-height:1.05;letter-spacing:.015em;display:block}
+.gima-login-brand small{font-size:13px;display:block;margin-top:4px}
+.gima-login-card h1{font-size:clamp(22px,3vw,27px);text-align:center;line-height:1.3;margin:0 0 8px;color:#0d3151}
+.gima-login-subtitle{font-size:13px;color:#597181;text-align:center;margin:0 0 24px}
+.gima-login-form label{display:block;font-size:13px;font-weight:700;color:#355568;margin:14px 0 7px}
+.gima-login-form input:not([type=checkbox]){width:100%;min-width:0;box-sizing:border-box;border:1px solid #cddfe9;border-radius:7px;padding:12px 13px;background:#fff;font:inherit;color:#163a4d}
+.gima-login-form input:focus{outline:2px solid #12b0bc;outline-offset:1px}
+.gima-password-field{display:flex;align-items:center;position:relative}
+.gima-password-field input{padding-right:70px!important}
+.gima-password-field button{position:absolute;right:5px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#26748c;padding:9px;cursor:pointer;font-size:12px}
+.gima-login-options{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:14px 0 18px;font-size:12px}
+.gima-login-options .gima-remember-label{display:flex;align-items:center;gap:7px;margin:0;font-size:12px;font-weight:400;white-space:nowrap}
+.gima-remember-label input{accent-color:#06a4b1}
+.gima-login-help{text-align:right;color:#597181}
+.gima-login-help a,.gima-login-contact a{color:#0099b2;text-decoration:none;font-weight:650}
+.gima-login-submit{width:100%;border:0;border-radius:7px;background:linear-gradient(100deg,#0099aa,#10b2bf);color:white;font:700 14px inherit;padding:14px;cursor:pointer}
+.gima-login-submit:hover{filter:brightness(.95)}
+.gima-login-submit:disabled{opacity:.6;cursor:wait}
+.gima-login-form .auth-note{margin:12px 0 0;min-height:0;line-height:1.45}
+.gima-login-form .auth-note:empty{display:none}
+.gima-login-divider{display:flex;align-items:center;gap:12px;color:#7c929f;font-size:12px;margin:22px 0 16px}
+.gima-login-divider:before,.gima-login-divider:after{content:"";height:1px;background:#e2edf2;flex:1}
+.gima-social-logins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gima-social-logins button{border:1px solid #d1e1e9;border-radius:7px;padding:11px;background:#f8fbfd;color:#6a7e88;font:600 13px inherit;cursor:not-allowed;opacity:.7}
+.gima-google-letter{font-weight:800;color:#4285f4;margin-right:7px}
+.gima-ms-icon{color:#00a4b4;margin-right:7px}
+.gima-login-caption{text-align:center;color:#7a8f9b;font-size:11px;margin:10px 0}
+.gima-login-contact{text-align:center;font-size:12px;color:#647c88;margin:16px 0 0}
+.gima-login-back{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:#326d81;text-decoration:none;font-size:13px;white-space:nowrap}
+@media(max-width:500px){.gima-login-page{padding:25px 14px 65px}.gima-login-card{padding:25px 20px}.gima-login-brand img{width:52px;height:52px}.gima-login-brand strong{font-size:16px}.gima-login-options{align-items:flex-start}.gima-login-help{max-width:155px}}
