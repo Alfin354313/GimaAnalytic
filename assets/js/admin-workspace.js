@@ -17,6 +17,70 @@ async function loadSurveys(){
   $("org-role").textContent="Peran: "+role();
   $("create-panel").hidden=!canEdit();
   renderSurveys();
+  await loadMembers(orgId);
+}
+async function loadMembers(orgId){
+  const root=$("member-list");if(!root)return;
+  root.replaceChildren(el("p","Memuat anggota...","admin-meta"));
+  const {data,error}=await client.rpc("gima_list_organization_members",{p_organization_id:orgId});
+  if($("org-select").value!==orgId)return;
+  root.replaceChildren();
+  if(error){root.append(el("p","Daftar anggota belum dapat diakses sesuai kebijakan RLS.","admin-meta"));return;}
+  if(!data?.length){root.append(el("p","Tidak ada data anggota yang dapat ditampilkan.","admin-meta"));return;}
+  const counts=new Map();
+  for(const member of data)counts.set(member.role,(counts.get(member.role)||0)+1);
+  for(const [memberRole,count] of counts){
+    const row=el("div",undefined,"admin-stat");
+    row.append(el("span",memberRole==="owner"?"Pemilik":memberRole==="admin"?"Admin":memberRole==="member"?"Anggota":memberRole),el("strong",String(count)));
+    root.append(row);
+  }
+  root.append(el("p","Jumlah yang terlihat: "+data.length+" anggota. Angka mengikuti izin akses akun Anda.","admin-meta"));
+  const permissions=el("div",undefined,"member-permissions");
+  permissions.append(el("h3","Panduan Hak Akses"));
+  const matrix=el("table",undefined,"member-permission-table");
+  const thead=el("thead"),headRow=el("tr");
+  for(const title of ["Peran","Lihat survei","Kelola survei"]){headRow.append(el("th",title));}
+  thead.append(headRow);matrix.append(thead);
+  const body=el("tbody");
+  for(const [r,read,write] of [["Pemilik","Ya","Ya"],["Admin","Ya","Ya"],["Analis","Sesuai RLS","Tidak"]]){
+    const tr=el("tr");for(const value of [r,read,write])tr.append(el("td",value));body.append(tr);
+  }
+  matrix.append(body);permissions.append(matrix);
+  permissions.append(el("p","Ringkasan ini menggambarkan aturan tampilan dashboard. Izin sesungguhnya ditentukan kebijakan RLS dan fungsi Supabase.","admin-meta"));
+  root.append(permissions);
+  const currentOrg=orgs.find(o=>o.id===orgId);
+  if(currentOrg?.role==="owner"){
+    const form=el("form",undefined,"member-add-form");
+    form.append(el("h3","Tambah Anggota Terdaftar"));
+    form.append(el("p","Masukkan User ID (UUID) akun yang sudah terdaftar di Supabase Auth. Jangan gunakan email atau service_role key.","admin-meta"));
+    const uid=el("input");uid.type="text";uid.placeholder="User ID (UUID)";uid.required=true;uid.setAttribute("aria-label","User ID anggota");
+    uid.pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    const roleSelect=el("select");roleSelect.setAttribute("aria-label","Peran anggota");
+    for(const role of ["analyst","admin"]){const option=el("option",role);option.value=role;roleSelect.append(option);}
+    const submit=el("button","Tambah Anggota");submit.type="submit";
+    const feedback=el("p",undefined,"admin-meta");feedback.setAttribute("role","status");
+    form.append(uid,roleSelect,submit,feedback);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();submit.disabled=true;feedback.textContent="Memproses...";
+      const {error:addError}=await client.rpc("gima_add_organization_member",{
+        p_organization_id:orgId,p_user_id:uid.value.trim(),p_role:roleSelect.value
+      });
+      if(addError){feedback.textContent="Gagal menambah anggota: "+(addError.message||addError.code);submit.disabled=false;return;}
+      feedback.textContent="Anggota berhasil ditambahkan.";submit.disabled=false;
+      await loadMembers(orgId);
+    });
+    root.append(form);
+  }
+  if(canEdit()){
+    const exportButton=action("Unduh Ringkasan Tim (CSV)",()=>{
+      const cell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+      const rows=[["Organisasi","Peran","Jumlah terlihat"],...Array.from(counts,([r,n])=>[orgs.find(o=>o.id===orgId)?.name||"",r,n])];
+      const blob=new Blob(["\uFEFF"+rows.map(row=>row.map(cell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download="gima-ringkasan-tim.csv";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    exportButton.className="member-export";root.append(exportButton);
+  }
 }
 function action(label,fn){const b=el("button",label);b.type="button";b.addEventListener("click",fn);return b;}
 function renderSurveys(){
@@ -60,6 +124,30 @@ async function openReport(s){
   heading.append(el("strong",ready.length+" dari "+data.length+" pertanyaan memiliki hasil yang dapat ditampilkan"));
   heading.append(el("p","Nilai hanya ditampilkan jika sedikitnya 5 respons valid tersedia pada pertanyaan tersebut. Angka 0 pada pertanyaan lain berarti hasil disembunyikan, bukan berarti tidak ada respons.","admin-meta"));
   root.append(heading);
+  const executive=el("section",undefined,"executive-summary");
+  executive.append(el("h3","Ringkasan Eksekutif"));
+  const kpis=el("div",undefined,"executive-kpis");
+  function metric(label,value,detail){
+    const card=el("div",undefined,"executive-kpi");
+    card.append(el("span",label),el("strong",value),el("small",detail));
+    kpis.append(card);
+  }
+  const scores=ready.map(q=>Number(q.average_score));
+  const overallScore=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;
+  const responseCounts=ready.map(q=>Number(q.response_count));
+  const consistentCount=responseCounts.length>0&&responseCounts.every(c=>c===responseCounts[0]);
+  metric("Skor agregat",overallScore===null?"Tertutup":overallScore.toFixed(2)+" / 5","Rata-rata pertanyaan yang memenuhi ambang privasi");
+  metric("Cakupan pertanyaan",ready.length+" / "+data.length,"Memenuhi minimum 5 respons per pertanyaan");
+  metric("Respons per pertanyaan",consistentCount?String(responseCounts[0]):"Beragam","Bukan jumlah responden unik lintas pertanyaan");
+  const lowQuestions=ready.filter(q=>Number(q.average_score)<3);
+  metric("Area perlu ditinjau",ready.length?String(lowQuestions.length):"—","Pertanyaan dengan skor di bawah 3/5");
+  executive.append(kpis);
+  executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Perbandingan hanya dapat dibuat dari pertanyaan yang identik dan memenuhi ambang privasi.","admin-meta"));
+  root.append(executive);
+  const printButton=action("Cetak / Simpan PDF",()=>window.print());
+  printButton.className="report-download report-print-button";
+  root.append(printButton);
+  renderPeriodComparison(root,s,data);
   if(ready.length){
     const overall=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
     const card=el("div",undefined,"report-score");
@@ -124,6 +212,64 @@ async function openReport(s){
     root.append(advice);
   }
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderPeriodComparison(root,current,currentData){
+  const section=el("section",undefined,"period-comparison");
+  section.append(el("h3","Perbandingan Antar Survei"));
+  section.append(el("p","Pilih survei lain dari organisasi yang sama. Hanya pertanyaan dengan teks persis sama, tidak duplikat, dan minimal 5 respons valid pada kedua survei yang dibandingkan. Skala keduanya Likert 1–5.","admin-meta"));
+  const candidates=surveys.filter(s=>s.id!==current.id&&s.status!=="draft");
+  if(!candidates.length){
+    section.append(el("p","Belum ada survei pembanding yang dipublikasikan atau ditutup. Buat survei periode berikutnya dengan pertanyaan identik untuk mengaktifkan perbandingan.","admin-meta"));
+    root.append(section);return;
+  }
+  const label=el("label","Survei pembanding");const select=el("select");
+  select.setAttribute("aria-label","Survei pembanding");
+  const placeholder=el("option","Pilih survei pembanding");placeholder.value="";select.append(placeholder);
+  for(const item of candidates){const option=el("option",item.title);option.value=item.id;select.append(option);}
+  section.append(label,select);
+  const result=el("div",undefined,"period-results");section.append(result);
+  let requestId=0;
+  select.addEventListener("change",async()=>{
+    const selectedId=select.value;const seq=++requestId;result.replaceChildren();
+    if(!selectedId)return;
+    result.append(el("p","Memuat perbandingan...","admin-meta"));
+    const {data,error}=await client.rpc("gima_survey_summary",{p_survey_id:selectedId});
+    if(seq!==requestId)return;
+    result.replaceChildren();
+    if(error){result.append(el("p","Gagal memuat survei pembanding: "+(error.code||error.message),"admin-meta"));return;}
+    const normalize=q=>String(q.question_prompt||"").trim().replace(/\\s+/g," ").toLocaleLowerCase("id-ID");
+    const currentMap=new Map(),otherMap=new Map();
+    for(const [items,map] of [[currentData,currentMap],[data||[],otherMap]]){
+      for(const q of items){const key=normalize(q);if(!map.has(key))map.set(key,[]);map.get(key).push(q);}
+    }
+    const pairs=[];
+    for(const [key,a] of currentMap){
+      const b=otherMap.get(key);
+      if(a.length!==1||!b||b.length!==1)continue;
+      const left=a[0],right=b[0];
+      if(Number(left.response_count)<5||Number(right.response_count)<5||left.average_score===null||right.average_score===null)continue;
+      pairs.push({prompt:left.question_prompt,current:Number(left.average_score),previous:Number(right.average_score)});
+    }
+    if(!pairs.length){
+      result.append(el("p","Belum ada pertanyaan identik yang memenuhi minimal 5 respons pada kedua survei. Tidak ada skor yang dibandingkan.","admin-meta"));return;
+    }
+    const other=candidates.find(x=>x.id===selectedId);
+    result.append(el("p","Selisih = skor survei saat ini dikurangi skor "+(other?.title||"pembanding")+". Nilai positif berarti lebih tinggi pada survei saat ini.","admin-meta"));
+    const average=pairs.reduce((acc,p)=>acc+p.current-p.previous,0)/pairs.length;
+    const top=el("div",undefined,"period-delta");
+    top.append(el("span","Rata-rata selisih "+pairs.length+" pertanyaan sepadan"),el("strong",(average>0?"+":"")+average.toFixed(2)+" poin"));
+    result.append(top);
+    for(const p of pairs){
+      const line=el("div",undefined,"period-row");
+      line.append(el("strong",p.prompt));
+      line.append(el("span","Pembanding "+p.previous.toFixed(2)+" / 5 → Saat ini "+p.current.toFixed(2)+" / 5"));
+      const delta=p.current-p.previous;
+      line.append(el("span","Selisih "+(delta>0?"+":"")+delta.toFixed(2)+" poin","admin-meta"));
+      result.append(line);
+    }
+    result.append(el("p","Perbandingan ini deskriptif. Perbedaan waktu, responden, dan metode pengumpulan dapat memengaruhi hasil. Pertanyaan dengan teks berbeda tidak dibandingkan.","admin-meta"));
+  });
+  root.append(section);
 }
 function downloadActionPlan(s,priority,actions){
   const cell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
