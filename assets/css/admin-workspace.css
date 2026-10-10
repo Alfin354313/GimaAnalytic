@@ -4,3 +4,5 @@
 
 /* Phase 9: descriptive insights */
 .report-insights{margin-top:22px;padding:20px;border:1px solid #c9e4ee;background:#f3fafe;border-radius:14px}.report-insights h3{margin:0 0 10px;color:#164f7c}.report-insights p{line-height:1.65;overflow-wrap:anywhere}
+
+.report-recommendations{background:#fff;border-color:#d4e7ee}.report-recommendations ul{padding-left:23px;margin:10px 0}.report-recommendations li{line-height:1.6;margin:8px 0}
