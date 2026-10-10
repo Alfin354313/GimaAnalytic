@@ -1,5 +1,18 @@
-# GIMA Analytics
+# GIMA Analytics — Website Preview
 
-Official website and HR analytics platform by Giandra Maheswara.
+Responsive static landing page for **Giandra Maheswara**, People Analytics & HR Survey Consultant.
 
-Development takes place on feature branches. Production main remains minimal until approved.
+## Preview locally
+Run `python3 -m http.server 3000` and visit http://localhost:3000.
+
+## Vercel
+Import repository and deploy branch `preview/gima-website-v1` as a preview. No build command needed.
+
+## Before production
+- Original Giandra Maheswara logo still needs to be added as an exact image asset; the header currently shows a temporary GM mark.
+- Contact email `hello@example.com` is a placeholder.
+- All portfolio case studies and dashboard figures are simulated.
+- Client authentication, HR surveys, tenant separation and database are not yet implemented. Do not collect real employee data.
+- Brand and domain clearance is pending.
+
+No merge to main has been made.
