@@ -234,12 +234,42 @@ const setup=()=>{
     const percent=n=>n===null?"—":(n/5*100).toFixed(1)+"%";
     const engagement=valid.filter(q=>/engage|keterlibatan|komitmen|motivasi|antusias|bangga/i.test(q.question_prompt));
     const satisfaction=valid.filter(q=>/puas|kepuasan|satisfaction/i.test(q.question_prompt));
-    executiveCard("Total Responden","—","Jumlah unik belum tersedia sebagai agregat aman");
-    executiveCard("Engagement Score",percent(avg(engagement)),engagement.length+" pertanyaan terkait, skala Likert 1–5");
-    executiveCard("Tingkat Kepuasan",percent(avg(satisfaction)),satisfaction.length+" pertanyaan terkait, bukan persentase karyawan puas");
+    const consistentCounts=summaries.map(x=>{
+      const counts=x.data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null).map(q=>Number(q.response_count));
+      return counts.length&&counts.every(n=>n===counts[0])?counts[0]:null;
+    });
+    executiveCard("Total Responden","—","Butuh agregat responden unik; jumlah respons per pertanyaan tidak setara dengan jumlah orang");
+    executiveCard("Engagement Score",percent(avg(engagement)),engagement.length+" pertanyaan relevan • indeks skor 1–5, bukan ukuran tervalidasi");
+    executiveCard("Tingkat Kepuasan",percent(avg(satisfaction)),satisfaction.length+" pertanyaan relevan • indeks skor, bukan persentase karyawan puas");
     executiveCard("Turnover Rate","—","Memerlukan data HR karyawan keluar dan rata-rata headcount");
-    const trend=chartBox("Tren Engagement","Perbandingan periode hanya tersedia bila survei berulang memiliki pertanyaan yang sebanding.");
-    addNote(trend,"Belum tersedia seri waktu tervalidasi. Tidak menampilkan tren buatan.");
+    const trend=chartBox("Tren Engagement","Perbandingan hanya dari survei berbeda dengan pertanyaan engagement yang identik.");
+    const comparable=new Map();
+    for(const entry of summaries){
+      for(const q of entry.data){
+        if(Number(q.response_count)<5||q.average_score===null||!/engage|keterlibatan|komitmen|motivasi|antusias|bangga/i.test(q.question_prompt))continue;
+        const key=q.question_prompt.trim().toLocaleLowerCase("id");
+        if(!comparable.has(key))comparable.set(key,[]);
+        comparable.get(key).push({survey:entry.survey.title,score:Number(q.average_score)});
+      }
+    }
+    const repeat=[...comparable.values()].filter(x=>x.length>=2);
+    if(repeat.length){
+      const uniqueSurveys=[...new Set(repeat.flatMap(x=>x.map(y=>y.survey)))];
+      if(uniqueSurveys.length>=2){
+        addNote(trend,"Perbandingan lintas survei berdasarkan pertanyaan identik. Urutan mengikuti daftar survei, bukan urutan kronologis.");
+        for(const title of uniqueSurveys){
+          const values=repeat.flatMap(series=>series.filter(x=>x.survey===title).map(x=>x.score));
+          if(!values.length)continue;
+          const row=document.createElement("div");row.className="gima-exec-bar-row";
+          const label=document.createElement("span");label.textContent=title;
+          const track=document.createElement("div");track.className="gima-feature-track";
+          const fill=document.createElement("i");const score=values.reduce((a,b)=>a+b,0)/values.length;
+          fill.style.width=Math.max(0,Math.min(100,score*20))+"%";track.append(fill);
+          const number=document.createElement("b");number.textContent=score.toFixed(2)+"/5";
+          row.append(label,track,number);trend.append(row);
+        }
+      }else addNote(trend,"Belum tersedia survei berbeda dengan pertanyaan engagement yang sebanding.");
+    }else addNote(trend,"Belum tersedia survei berulang dengan pertanyaan engagement identik dan minimal lima respons valid.");
     const dimension=chartBox("Skor per Dimensi","Pengelompokan indikatif berdasarkan kata kunci pertanyaan, bukan dimensi yang sudah divalidasi.");
     const buckets=[
       ["Kepemimpinan",/pimpin|atasan|supervisor|manajer/i],
