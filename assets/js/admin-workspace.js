@@ -18,6 +18,43 @@ async function loadSurveys(){
   $("create-panel").hidden=!canEdit();
   renderSurveys();
   await loadMembers(orgId);
+  renderCommercialReadiness(orgId);
+}
+function renderCommercialReadiness(orgId){
+  const root=$("commercial-content");if(!root)return;
+  root.replaceChildren();
+  const org=orgs.find(o=>o.id===orgId);if(!org)return;
+  const draft=surveys.filter(s=>s.status==="draft").length;
+  const published=surveys.filter(s=>s.status==="published").length;
+  const closed=surveys.filter(s=>s.status==="closed").length;
+  const metrics=[["Survei draft",draft],["Survei aktif",published],["Survei selesai",closed]];
+  for(const [name,value] of metrics){const line=el("div",undefined,"admin-stat");line.append(el("span",name),el("strong",String(value)));root.append(line);}
+  const checklist=el("div",undefined,"commercial-checklist");
+  checklist.append(el("h3","Checklist Operasional"));
+  const items=[
+    ["Akun organisasi aktif",true],
+    ["Setidaknya satu survei dibuat",surveys.length>0],
+    ["Survei pernah dipublikasikan",published+closed>0],
+    ["Laporan dan izin akses sudah ditinjau",false],
+    ["Persetujuan klien, privasi, dan retensi sudah diverifikasi",false]
+  ];
+  const list=el("ul");
+  for(const [label,complete] of items){const item=el("li",(complete?"✓ ":"○ ")+label);item.className=complete?"commercial-complete":"commercial-pending";list.append(item);}
+  checklist.append(list);
+  checklist.append(el("p","Dua pemeriksaan terakhir wajib dilakukan secara manual. Checklist ini tidak menyatakan organisasi sudah siap produksi.","admin-meta"));
+  root.append(checklist);
+  if(["owner","admin"].includes(org.role)){
+    const button=action("Unduh Rekap Survei (CSV)",()=>{
+      const csvCell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
+      const rows=[["Organisasi","Judul survei","Status","Dibuat pada"],...surveys.map(s=>[org.name,s.title,s.status,s.created_at||""])];
+      const content="\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n");
+      const blob=new Blob([content],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download="gima-rekap-survei.csv";document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    button.className="member-export";root.append(button);
+  }
 }
 async function loadMembers(orgId){
   const root=$("member-list");if(!root)return;
