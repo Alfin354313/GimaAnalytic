@@ -40,7 +40,7 @@ const setup=()=>{
     ["Total Survei","stat-total","Survei dalam organisasi"],
     ["Survei Aktif","stat-published","Telah dipublikasikan"],
     ["Survei Draft","stat-draft","Belum dipublikasikan"],
-    ["Survei Selesai",null,"Status selesai"]
+    ["Peran Akun",null,"Hak akses organisasi"]
   ];
   for(const [label,id,note] of stats){
     const card=document.createElement("article");card.className="gima-kpi-card";
@@ -52,11 +52,9 @@ const setup=()=>{
       const source=document.getElementById(id);
       if(source){const update=()=>{value.textContent=source.textContent||"0";};update();new MutationObserver(update).observe(source,{childList:true,characterData:true,subtree:true});}
     }else{
-      const update=()=>{
-        const active=document.getElementById("stat-total"),draft=document.getElementById("stat-draft"),published=document.getElementById("stat-published");
-        if(active&&draft&&published){const total=Number(active.textContent)||0;const d=Number(draft.textContent)||0;const p=Number(published.textContent)||0;value.textContent=String(Math.max(0,total-d-p));}
-      };
-      for(const id of ["stat-total","stat-draft","stat-published"]){const node=document.getElementById(id);if(node)new MutationObserver(update).observe(node,{childList:true,characterData:true,subtree:true});}
+      const source=document.getElementById("org-role");
+      const update=()=>{value.textContent=(source?.textContent||"—").replace(/^Peran:\\s*/i,"")||"—";};
+      if(source)new MutationObserver(update).observe(source,{childList:true,characterData:true,subtree:true});
       update();
     }
   }
