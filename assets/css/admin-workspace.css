@@ -175,3 +175,17 @@
  .admin-heading{padding:18px}
 }
 @media(max-width:480px){.admin-workspace{padding:18px 12px}.gima-admin-view .admin-box{padding:16px}.gima-view-heading{font-size:22px}}
+
+
+/* Fix: base site's generic nav rules must not override admin sidebar */
+nav.gima-admin-sidebar{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden}
+nav.gima-admin-sidebar .gima-sidebar-brand{width:100%;min-width:0;box-sizing:border-box;flex:0 0 auto;margin:0 0 12px}
+nav.gima-admin-sidebar .gima-sidebar-links{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:7px!important;width:100%;min-width:0;box-sizing:border-box}
+nav.gima-admin-sidebar .gima-sidebar-link{position:static!important;display:flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:flex-start!important;width:100%!important;max-width:100%;min-width:0;box-sizing:border-box;margin:0!important;white-space:normal;text-align:left}
+nav.gima-admin-sidebar .gima-nav-icon{flex:0 0 21px}
+.gima-admin-shell>.gima-admin-main{min-width:0;width:100%}
+@media(max-width:850px){
+ nav.gima-admin-sidebar .gima-sidebar-links{display:none!important}
+ nav.gima-admin-sidebar .gima-mobile-label{display:block}
+ nav.gima-admin-sidebar .gima-mobile-nav{display:block}
+}
