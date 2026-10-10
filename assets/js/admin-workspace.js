@@ -81,8 +81,21 @@ async function renderBilling(orgId){
     popup.focus();
   };
 
+  const deleteBilling=async(table,id,label)=>{
+    if(role()!=="owner")return;
+    if(!window.confirm("Hapus "+label+" secara permanen? Tindakan ini tidak bisa dibatalkan."))return;
+    const {data,error}=await client.from(table).delete().eq("id",id).eq("organization_id",orgId).select("id");
+    if(error){say("Gagal menghapus "+label+": "+(error.message||error.code));return;}
+    if(!data?.length){say("Data tidak terhapus. Periksa hak akses dan jalankan migrasi SQL 012.");return;}
+    say(label+" berhasil dihapus.");await renderBilling(orgId);
+  };
   title("Kontrak Klien");
-  for(const c of contracts){root.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status,"billing-record"));}
+  for(const c of contracts){
+    const row=el("div",undefined,"billing-record");
+    row.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status));
+    if(role()==="owner")row.append(action("Hapus Kontrak",()=>deleteBilling("client_contracts",c.id,"kontrak "+c.reference)));
+    root.append(row);
+  }
   form([["client_name","Nama klien","text"],["reference","Nomor kontrak","text"],["amount_idr","Nilai kontrak (Rp)","number"],["starts_on","Mulai kontrak","date"]],
     "Simpan Kontrak + Invoice Otomatis",v=>client.from("client_contracts").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
   title("Invoice Otomatis — Jatuh Tempo 5 Hari");
@@ -106,6 +119,9 @@ async function renderBilling(orgId){
     item.append(method,note,save);
     const contract=contracts.find(c=>c.id===i.contract_id);
     item.append(action("Invoice PDF",()=>openDocument(i,contract,verified,false)));
+    if(role()==="owner"&&!payments.some(p=>p.invoice_id===i.id)){
+      item.append(action("Hapus Invoice",()=>deleteBilling("client_invoices",i.id,"invoice "+i.invoice_number)));
+    }
     if(verified>=Number(i.amount_idr)&&Number(i.amount_idr)>0){
       item.append(action("Bukti Lunas PDF",()=>openDocument(i,contract,verified,true)));
     }
@@ -132,6 +148,9 @@ async function renderBilling(orgId){
         if(error){say("Gagal verifikasi pembayaran: "+(error.code||error.message));return;}
         await renderBilling(orgId);
       });row.append(confirm);
+    }
+    if(role()==="owner"&&p.status==="pending"){
+      row.append(action("Hapus Pembayaran",()=>deleteBilling("client_payments",p.id,"pembayaran pending "+p.transfer_reference)));
     }
     root.append(row);
   }
