@@ -82,3 +82,5 @@
 }
 
 .commercial-checklist{margin-top:16px}.commercial-checklist h3{font-size:15px;margin:0 0 8px}.commercial-checklist ul{list-style:none;padding:0;margin:0}.commercial-checklist li{font-size:13px;padding:6px 0}.commercial-complete{color:#176e55}.commercial-pending{color:#6a7783}@media print{#commercial-panel{display:none!important}}
+
+#billing-panel h3{font-size:16px;margin:20px 0 10px}.billing-form{display:grid;gap:10px;padding:12px;border:1px solid #e0ebf0;border-radius:10px}.billing-form label{font-size:12px;font-weight:650}.billing-form input,.billing-form select{display:block;width:100%;margin-top:5px}.billing-form button,.billing-record button{padding:10px;border:0;border-radius:8px;background:#215d92;color:white;cursor:pointer}.billing-form button:disabled{opacity:.5}.billing-record{font-size:13px;padding:10px 0;border-bottom:1px solid #e0ebf0;overflow-wrap:anywhere}.billing-record button{display:block;margin-top:8px;font-size:12px}@media print{#billing-panel{display:none!important}}
