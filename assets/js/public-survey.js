@@ -31,21 +31,21 @@ async function load(){
  const progress=document.createElement("p");progress.setAttribute("role","status");controls.append(progress);
  const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban";button.disabled=true;controls.append(button);
  root.append(controls);
- let submitting=false;let submitted=false;
- function refresh(){button.disabled=submitting||submitted||answers.size!==questions.length||!check.checked||questions.length===0;progress.textContent="Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan");}
+ let submitting=false;let submitted=false;let feedback="";
+ function refresh(){button.disabled=submitting||submitted||answers.size!==questions.length||!check.checked||questions.length===0;progress.textContent=feedback||("Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan"));}
  check.addEventListener("change",refresh);refresh();
  button.addEventListener("click",async()=>{
   if(submitting||submitted||answers.size!==questions.length||!check.checked)return;
-  submitting=true;refresh();button.textContent="Mengirim...";
+  submitting=true;feedback="Sedang mengirim jawaban...";refresh();button.textContent="Mengirim...";
   try{
    const payload=questions.map(q=>({question_id:q.id,score:answers.get(q.id)}));
    const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload});
    if(submitError)throw submitError;
    if(result&&typeof result==="object"&&result.success===false)throw Error(result.message||"Jawaban belum diterima.");
    submitted=true;button.textContent="Jawaban Terkirim";
-   progress.textContent="Terima kasih. Jawaban berhasil dikirim.";
+   feedback="Terima kasih. Jawaban berhasil dikirim.";
    $("public-status").textContent="Jawaban telah dikirim. Anda dapat menutup halaman ini.";
-  }catch(e){button.textContent="Coba Kirim Lagi";progress.textContent="Pengiriman gagal. Jawaban belum terkonfirmasi tersimpan. "+(e.message||"Periksa koneksi dan konfigurasi fungsi Supabase.");}
+  }catch(e){button.textContent="Coba Kirim Lagi";feedback="Pengiriman gagal. Jawaban belum terkonfirmasi tersimpan. "+(e.message||"Periksa koneksi dan konfigurasi fungsi Supabase.");}
   finally{submitting=false;refresh();}
  });
  $("public-status").textContent="Survei tanpa kode undangan. Isi seluruh pertanyaan dan berikan persetujuan sebelum mengirim.";
