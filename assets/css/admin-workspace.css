@@ -12,3 +12,24 @@
 
 /* Phase 10: compare privacy-safe summaries across surveys */
 .period-comparison{border:1px solid #d4e7ef;border-radius:14px;background:#fff;padding:20px;margin:18px 0}.period-comparison h3{margin:0 0 10px;color:#174e7d}.period-comparison label{display:block;margin:12px 0 6px;font-weight:650}.period-comparison select{width:100%;max-width:480px;border:1px solid #b8d6dd;border-radius:9px;padding:11px;background:white;font:inherit}.period-results{margin-top:15px}.period-delta{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#eef7fb;border-radius:10px;padding:14px;flex-wrap:wrap}.period-delta strong{color:#16548a;font-size:23px}.period-row{padding:13px 0;border-bottom:1px solid #e4edf1;display:flex;flex-direction:column;gap:6px}.period-row span{font-size:14px}@media(max-width:520px){.period-comparison{padding:14px}}
+
+/* Phase 10: print-friendly executive report */
+@media print{
+ @page{size:A4;margin:15mm}
+ body{background:#fff!important;color:#162f3f!important;font-size:11pt}
+ header.top,footer,.admin-heading,.admin-grid>aside,#survey-list,#admin-message,#question-form,#close-questions,.report-download,.period-comparison select,.period-comparison label{display:none!important}
+ .admin-workspace{padding:0!important;background:white!important;min-height:auto!important}
+ .admin-grid{display:block!important;margin:0!important}
+ .admin-grid>section.admin-box{border:0!important;box-shadow:none!important;padding:0!important}
+ .admin-grid>section.admin-box>h2,.admin-grid>section.admin-box>.admin-meta{display:none!important}
+ #question-panel{display:block!important;border:0!important;margin:0!important}
+ #question-panel>hr{display:none!important}
+ #question-heading{font-size:19pt!important;margin:0 0 8mm!important;color:#173e61!important}
+ #question-panel>.admin-meta{display:none!important}
+ #question-list{display:block!important}
+ .executive-summary,.report-overview,.report-score,.report-item,.report-insights,.period-comparison{break-inside:avoid;page-break-inside:avoid;box-shadow:none!important}
+ .executive-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .report-track,.report-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .period-comparison{border:1px solid #d4e7ef!important}
+ a{color:inherit!important;text-decoration:none!important}
+}
