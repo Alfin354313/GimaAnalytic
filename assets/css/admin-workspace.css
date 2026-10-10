@@ -245,3 +245,20 @@ nav.gima-admin-sidebar{position:relative;top:auto;border-radius:0;min-height:660
 .gima-feature-settings span{color:#557387}
 @media(max-width:900px){.gima-feature-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:580px){.gima-feature-metrics{grid-template-columns:1fr}.gima-feature-score{grid-template-columns:1fr 45px}.gima-feature-score span{grid-column:1/-1}.gima-feature-settings>div{flex-direction:column;gap:4px}}
+
+
+.gima-executive{display:grid;gap:16px;margin:18px 0}
+.gima-exec-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.gima-exec-card{background:#fff;border:1px solid #dceaf1;border-radius:14px;padding:19px;display:grid;gap:13px;min-width:0}
+.gima-exec-card span{color:#577286;font-size:12px;font-weight:700}
+.gima-exec-card strong{font-size:29px;color:#123953;overflow-wrap:anywhere}
+.gima-exec-card small{font-size:11px;line-height:1.5;color:#50838e}
+.gima-visual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.gima-exec-chart{background:#fff;border:1px solid #dceaf1;border-radius:15px;padding:22px;min-width:0;display:grid;align-content:start;gap:10px}
+.gima-exec-chart h3{font-size:17px;margin:0;color:#153b55}
+.gima-exec-chart .admin-meta{margin:0;line-height:1.6}
+.gima-exec-chart-body{display:grid;gap:13px;margin-top:8px}
+.gima-exec-bar-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(60px,1fr) 55px;gap:9px;align-items:center;font-size:12px}
+.gima-exec-bar-row b{text-align:right;color:#164560}
+@media(max-width:950px){.gima-exec-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:690px){.gima-exec-cards,.gima-visual-grid{grid-template-columns:1fr}.gima-exec-bar-row{grid-template-columns:1fr 60px}.gima-exec-bar-row span{grid-column:1/-1}}
