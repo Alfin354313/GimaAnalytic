@@ -189,3 +189,28 @@ nav.gima-admin-sidebar .gima-nav-icon{flex:0 0 21px}
  nav.gima-admin-sidebar .gima-mobile-label{display:block}
  nav.gima-admin-sidebar .gima-mobile-nav{display:block}
 }
+
+
+/* Mockup-aligned compact dashboard */
+.gima-admin-shell{grid-template-columns:218px minmax(0,1fr);gap:0;margin-top:18px;align-items:stretch;border:1px solid #dcebf0;border-radius:18px;overflow:hidden;background:#f5faff;box-shadow:0 12px 34px rgba(17,64,88,.055)}
+nav.gima-admin-sidebar{position:relative;top:auto;border-radius:0;min-height:660px;box-shadow:none;padding:22px 12px;background:linear-gradient(170deg,#092b49,#064b62)}
+.gima-sidebar-brand{font-size:15px;padding:8px 7px 22px}
+.gima-sidebar-brand small{font-size:8px}
+.gima-brand-mark{width:35px;height:35px}
+.gima-sidebar-foot{margin-top:auto;padding:18px 10px 6px;font-size:11px;color:#a8d5e2;border-top:1px solid rgba(255,255,255,.15)}
+.gima-admin-main{padding:25px;gap:16px;align-content:start;background:#f4f9fc}
+.gima-admin-main>.admin-meta{margin:0;font-size:12px}
+.gima-view-heading{font-size:25px;margin:0 0 2px}
+.gima-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.gima-kpi-card{display:flex;flex-direction:column;gap:10px;padding:18px 16px;min-width:0;border:1px solid #e3edf2;border-radius:13px;background:white;box-shadow:0 5px 16px rgba(20,67,94,.035)}
+.gima-kpi-card span{font-size:12px;color:#587384;font-weight:650}
+.gima-kpi-card strong{font-size:clamp(22px,2.6vw,31px);color:#103b59;overflow-wrap:anywhere}
+.gima-kpi-card small{font-size:11px;color:#159d9e}
+.gima-overview-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15px;align-items:start}
+.gima-overview-grid>.admin-box{min-width:0;height:100%}
+.gima-overview-grid .admin-box h2{font-size:18px}
+.gima-overview-grid .admin-stat{margin:6px 0}
+.gima-admin-view.gima-view-active{gap:16px}
+@media(max-width:1080px){.gima-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gima-overview-grid{grid-template-columns:1fr}}
+@media(max-width:850px){.gima-admin-shell{display:block}.gima-admin-sidebar{min-height:0!important}.gima-admin-main{padding:18px}.gima-sidebar-foot{display:none}}
+@media(max-width:480px){.gima-kpi-grid{gap:8px}.gima-kpi-card{padding:13px 11px}.gima-kpi-card strong{font-size:23px}.gima-admin-main{padding:12px}}
