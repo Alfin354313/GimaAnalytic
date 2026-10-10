@@ -6,3 +6,6 @@
 .report-insights{margin-top:22px;padding:20px;border:1px solid #c9e4ee;background:#f3fafe;border-radius:14px}.report-insights h3{margin:0 0 10px;color:#164f7c}.report-insights p{line-height:1.65;overflow-wrap:anywhere}
 
 .report-recommendations{background:#fff;border-color:#d4e7ee}.report-recommendations ul{padding-left:23px;margin:10px 0}.report-recommendations li{line-height:1.6;margin:8px 0}
+
+/* Phase 10 executive overview */
+.executive-summary{margin:18px 0 24px;border:1px solid #c9e3ee;background:#f8fcff;border-radius:15px;padding:20px}.executive-summary h3{margin:0 0 16px;color:#164e79}.executive-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.executive-kpi{background:white;border:1px solid #dcecf2;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}.executive-kpi span{font-weight:650;font-size:13px;color:#355b6b}.executive-kpi strong{font-size:clamp(20px,2.4vw,29px);color:#174d82;font-variant-numeric:tabular-nums}.executive-kpi small{color:#627c87;line-height:1.45}.executive-summary>.admin-meta{margin:14px 0 0}@media(max-width:520px){.executive-kpis{grid-template-columns:1fr}.executive-summary{padding:14px}}
