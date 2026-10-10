@@ -135,3 +135,43 @@
  .gima-mobile-label{display:block;font-size:12px;font-weight:700;margin:8px 0 5px}
  .gima-mobile-nav{display:block;width:100%;padding:12px;border:1px solid #b8d6dd;border-radius:9px;background:white;font:inherit}
 }
+
+
+/* GIMA Analytics design system: reference-inspired admin refresh */
+.admin-workspace{background:linear-gradient(145deg,#f0faff 0%,#f8fcff 52%,#edf8fc 100%);color:#0e3048}
+.admin-heading{background:#fff;border:1px solid #dbeef3;border-radius:18px;padding:22px 28px;box-shadow:0 10px 30px rgba(13,69,101,.045)}
+.admin-heading .eyebrow{color:#00a4b3;letter-spacing:.13em;font-weight:800}
+.admin-heading h1{color:#082c4b;font-size:clamp(26px,3vw,36px)}
+.gima-admin-shell{grid-template-columns:250px minmax(0,1fr);gap:22px}
+.gima-admin-sidebar{background:linear-gradient(165deg,#082e4d 0%,#06435a 65%,#086978 100%);border:0;box-shadow:0 12px 32px rgba(5,45,69,.14);padding:20px 12px;min-height:420px}
+.gima-sidebar-brand{display:flex;align-items:center;gap:11px;color:#fff;padding:12px 10px 22px;border-bottom:1px solid rgba(255,255,255,.18);font-size:18px;line-height:1.2}
+.gima-sidebar-brand b{font-weight:600;color:#78dfe3}
+.gima-sidebar-brand small{display:block;font-size:9px;letter-spacing:.14em;color:#b5dce6;margin-top:7px}
+.gima-brand-mark{display:grid;place-items:center;flex:none;width:40px;height:40px;background:linear-gradient(135deg,#0fd0bf,#1b9ab4);border-radius:12px;color:white;font-size:23px}
+.gima-sidebar-links{gap:7px}
+.gima-sidebar-link{display:flex;align-items:center;gap:12px;color:#d6ebf2;font:600 14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;padding:13px 15px;transition:background .15s,color .15s}
+.gima-nav-icon{width:21px;display:inline-flex;justify-content:center;font-size:19px}
+.gima-sidebar-link:hover{background:rgba(255,255,255,.12);color:#fff}
+.gima-sidebar-link.is-active{background:linear-gradient(90deg,#00a9b9,#16b8c4);color:#fff;box-shadow:none}
+.gima-sidebar-link:focus-visible{outline:3px solid #77e3e7;outline-offset:2px}
+.gima-admin-main{gap:20px}
+.gima-view-heading{font-size:clamp(22px,2.5vw,28px);color:#0c3554;font-weight:800;letter-spacing:-.02em}
+.gima-admin-view.gima-view-active{gap:18px}
+.gima-admin-view .admin-box{border:1px solid #d9eaf0;border-radius:17px;padding:clamp(18px,2.4vw,28px);box-shadow:0 7px 25px rgba(17,66,89,.035)}
+.gima-admin-view .admin-box h2{font-size:20px;color:#103953}
+.gima-admin-view .admin-box input:focus,.gima-admin-view .admin-box select:focus,.gima-admin-view .admin-box textarea:focus{outline:2px solid #00adbc;outline-offset:1px}
+.gima-admin-view .admin-stat{background:#f5fbfe;border:1px solid #e0eff5;border-radius:11px;margin:8px 0;padding:13px 15px}
+.gima-admin-view .admin-stat strong{color:#067d9b}
+.gima-admin-view .finance-dashboard{background:#f3fafe;border-color:#d6e9f1;border-radius:16px}
+.gima-admin-view .finance-stat{box-shadow:0 4px 14px rgba(14,80,109,.04)}
+.gima-admin-view .finance-stat strong{color:#007d9b}
+.gima-admin-view .billing-form button,.gima-admin-view .billing-record button{background:#087d9c}
+@media(max-width:850px){
+ .gima-admin-shell{grid-template-columns:1fr}
+ .gima-admin-sidebar{min-height:0;padding:14px 16px}
+ .gima-sidebar-brand{padding:4px 0 12px}
+ .gima-mobile-label{color:#cdebf0}
+ .gima-mobile-nav{background:#fff;color:#12394f}
+ .admin-heading{padding:18px}
+}
+@media(max-width:480px){.admin-workspace{padding:18px 12px}.gima-admin-view .admin-box{padding:16px}.gima-view-heading{font-size:22px}}
