@@ -27,7 +27,7 @@ async function renderBilling(orgId){
   root.replaceChildren(el("p","Memuat kontrak dan tagihan...","admin-meta"));
   const [contractsResult,invoicesResult,paymentsResult]=await Promise.all([
     client.from("client_contracts").select("id,client_name,reference,amount_idr,starts_on,ends_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
-    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,due_on,status,payment_method,payment_instructions").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,issued_on,due_on,status,payment_method,payment_instructions").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
     client.from("client_payments").select("id,invoice_id,amount_idr,paid_on,transfer_reference,status").eq("organization_id",orgId).limit(500)
   ]);
   if($("org-select").value!==orgId)return;
@@ -56,6 +56,31 @@ async function renderBilling(orgId){
       }finally{button.disabled=false;}
     });root.append(f);
   };
+
+  const openDocument=(invoice,contract,verified,paid)=>{
+    const popup=window.open("","_blank");
+    if(!popup){say("Izinkan pop-up browser untuk mencetak PDF.");return;}
+    const doc=popup.document;doc.title=(paid?"Kuitansi-Lunas-":"Invoice-")+invoice.invoice_number;
+    const style=doc.createElement("style");style.textContent="body{font:15px Arial,sans-serif;color:#193044;margin:48px auto;max-width:760px;padding:0 22px}header{border-bottom:3px solid #1676ab;padding-bottom:18px}h1{color:#155987}table{width:100%;border-collapse:collapse;margin:28px 0}td,th{padding:12px;border-bottom:1px solid #dce5ed;text-align:left}.total{font-size:22px;font-weight:700}.stamp{color:#167447;font-size:25px;font-weight:bold;border:2px solid #167447;padding:12px;display:inline-block}small{color:#567}button{padding:12px 18px;background:#1567a5;color:white;border:0;border-radius:8px;cursor:pointer}@media print{button{display:none}body{margin:20px auto}}";doc.head.append(style);
+    const add=(parent,tag,value,cls)=>{const node=doc.createElement(tag);node.textContent=value;if(cls)node.className=cls;parent.append(node);return node;};
+    const header=doc.createElement("header");doc.body.append(header);add(header,"h2","GIMA Analytics");add(header,"small","Dokumen penagihan dan pembayaran");
+    add(doc.body,"h1",paid?"BUKTI PEMBAYARAN LUNAS":"INVOICE TAGIHAN");
+    add(doc.body,"p","Nomor: "+invoice.invoice_number);
+    add(doc.body,"p","Klien: "+(contract?.client_name||"—"));
+    add(doc.body,"p","Kontrak: "+(contract?.reference||"—"));
+    add(doc.body,"p","Tanggal terbit: "+(invoice.issued_on||"—"));
+    add(doc.body,"p","Jatuh tempo: "+invoice.due_on);
+    const table=doc.createElement("table");doc.body.append(table);
+    for(const [label,value] of [["Layanan","Jasa GIMA Analytics"],["Nilai tagihan",money(invoice.amount_idr)],["Pembayaran terverifikasi",money(verified)],["Sisa tagihan",money(Math.max(0,Number(invoice.amount_idr)-verified))]]){
+      const tr=doc.createElement("tr");table.append(tr);add(tr,"th",label);add(tr,"td",value);
+    }
+    if(paid){add(doc.body,"p","LUNAS","stamp");add(doc.body,"p","Pembayaran telah diverifikasi secara manual oleh pengelola.");}
+    else{add(doc.body,"p","Status: BELUM LUNAS");add(doc.body,"p","Metode pembayaran: Transfer bank melalui koordinasi WhatsApp. Hubungi pengelola untuk detail rekening.");}
+    add(doc.body,"small","Dokumen dibuat secara elektronik oleh sistem GIMA Analytics. Simpan sebagai PDF melalui menu Cetak.");
+    const button=add(doc.body,"button","Cetak / Simpan PDF");button.onclick=()=>popup.print();
+    popup.focus();
+  };
+
   title("Kontrak Klien");
   for(const c of contracts){root.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status,"billing-record"));}
   form([["client_name","Nama klien","text"],["reference","Nomor kontrak","text"],["amount_idr","Nilai kontrak (Rp)","number"],["starts_on","Mulai kontrak","date"]],
@@ -78,7 +103,22 @@ async function renderBilling(orgId){
       if(error){say("Gagal menyimpan metode: "+(error.code||error.message));return;}
       await renderBilling(orgId);
     });
-    item.append(method,note,save);root.append(item);
+    item.append(method,note,save);
+    const contract=contracts.find(c=>c.id===i.contract_id);
+    item.append(action("Invoice PDF",()=>openDocument(i,contract,verified,false)));
+    if(verified>=Number(i.amount_idr)&&Number(i.amount_idr)>0){
+      item.append(action("Bukti Lunas PDF",()=>openDocument(i,contract,verified,true)));
+    }
+    item.append(action("Kirim via WhatsApp",()=>{
+      const number=window.prompt("Nomor WhatsApp klien (contoh: 6281234567890). PDF dikirim sebagai lampiran secara manual:");
+      if(number===null)return;
+      const normalized=number.replace(/[\\s()+-]/g,"").replace(/^0/,"62");
+      if(!/^62[0-9]{8,13}$/.test(normalized)){say("Nomor WhatsApp tidak valid.");return;}
+      const label=verified>=Number(i.amount_idr)?"Bukti pembayaran lunas":"Invoice tagihan";
+      const msg=label+" GIMA Analytics "+i.invoice_number+" untuk "+(contract?.client_name||"klien")+". Nilai: "+money(i.amount_idr)+". Jatuh tempo: "+i.due_on+". Dokumen PDF akan kami kirim sebagai lampiran.";
+      window.open("https://wa.me/"+normalized+"?text="+encodeURIComponent(msg),"_blank","noopener,noreferrer");
+    }));
+    root.append(item);
   }
   title("Pembayaran Transfer Manual");
   for(const p of payments){
