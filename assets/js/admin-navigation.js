@@ -12,7 +12,7 @@ const setup=()=>{
   if(!panel||!grid||!aside||!survey||!org||!team||!readiness||!create||!billing)return;
   const shell=document.createElement("div");shell.className="gima-admin-shell";
   const sidebar=document.createElement("nav");sidebar.className="gima-admin-sidebar";sidebar.setAttribute("aria-label","Menu dashboard admin");
-  const brand=document.createElement("div");brand.className="gima-sidebar-brand";brand.textContent="GIMA Analytics";sidebar.append(brand);
+  const brand=document.createElement("div");brand.className="gima-sidebar-brand";brand.innerHTML="<span class=\"gima-brand-mark\" aria-hidden=\"true\">◆</span><span>GIMA <b>Analytics</b><small>MANAGEMENT CONSOLE</small></span>";sidebar.append(brand);
   const mobileLabel=document.createElement("label");mobileLabel.textContent="Pilih menu";mobileLabel.htmlFor="gima-mobile-nav";mobileLabel.className="gima-mobile-label";sidebar.append(mobileLabel);
   const mobile=document.createElement("select");mobile.id="gima-mobile-nav";mobile.className="gima-mobile-nav";mobile.setAttribute("aria-label","Pilih menu dashboard");sidebar.append(mobile);
   const navList=document.createElement("div");navList.className="gima-sidebar-links";sidebar.append(navList);
@@ -24,12 +24,12 @@ const setup=()=>{
     ["billing","Kontrak & Tagihan","receipt",[billing]]
   ];
   const sections=new Map(),buttons=new Map();
-  for(const [key,label,,nodes] of groups){
+  for(const [key,label,icon,nodes] of groups){
     const section=document.createElement("section");section.className="gima-admin-view";section.dataset.view=key;section.setAttribute("aria-label",label);
     const title=document.createElement("h2");title.className="gima-view-heading";title.textContent=label;section.append(title);
     for(const node of nodes){node.style.marginTop="0";section.append(node);}
     main.append(section);sections.set(key,section);
-    const btn=document.createElement("button");btn.type="button";btn.className="gima-sidebar-link";btn.textContent=label;btn.dataset.target=key;btn.addEventListener("click",()=>select(key));navList.append(btn);buttons.set(key,btn);
+    const btn=document.createElement("button");btn.type="button";btn.className="gima-sidebar-link";const symbol=document.createElement("span");symbol.className="gima-nav-icon";symbol.setAttribute("aria-hidden","true");symbol.textContent=({"layout-dashboard":"▦","clipboard-list":"▤","users":"♙","receipt":"▧"})[icon]||"•";btn.append(symbol,document.createTextNode(label));btn.dataset.target=key;btn.addEventListener("click",()=>select(key));navList.append(btn);buttons.set(key,btn);
     const option=document.createElement("option");option.value=key;option.textContent=label;mobile.append(option);
   }
   const email=panel.querySelector(":scope > .admin-meta");if(email)main.prepend(email);
