@@ -70,3 +70,13 @@
  .executive-kpi,.report-item,.professional-report-footer{break-inside:avoid!important}
  .professional-report-footer{margin-top:6mm!important}
 }
+
+/* Phase 12: prevent insight and recommendations splitting across printed pages */
+@media print{
+ .report-insights{break-inside:avoid!important;page-break-inside:avoid!important;orphans:3;widows:3}
+ .report-recommendations{break-inside:avoid!important;page-break-inside:avoid!important}
+ .report-insights h3,.professional-method h3{break-after:avoid!important;page-break-after:avoid!important}
+ .report-insights p,.report-insights li{orphans:3;widows:3}
+ .report-chart{break-inside:auto!important}
+ .report-item{break-inside:avoid!important;page-break-inside:avoid!important}
+}
