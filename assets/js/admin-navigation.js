@@ -173,7 +173,7 @@ const setup=()=>{
     const detail=event.detail||{};
     if(detail.orgId){featureState.orgId=detail.orgId;featureState.rows=detail.surveys||[];featureState.summaries=[];}
     requestAnimationFrame(renderFeatures);
-    if(detail.orgId&&window.gimaFeatureClient)surveyData();
+    if(detail.orgId&&window.gimaFeatureClient){surveyData();fetchResponseCounts(detail.orgId);}
   });
   renderFeatures();
   // Mockup-inspired overview: live counts only, no invented analytics.
@@ -226,7 +226,17 @@ const setup=()=>{
     const body=document.createElement("div");body.className="gima-exec-chart-body";
     card.append(heading,note,body);visualGrid.append(card);return body;
   };
-  const renderExecutive=()=>{
+  let responseCounts={orgId:null,rows:null,error:null,loading:false};
+  const fetchResponseCounts=async(orgId)=>{
+    if(!orgId||!window.gimaFeatureClient)return;
+    responseCounts={orgId,rows:null,error:null,loading:true};
+    renderExecutive();
+    const {data,error}=await window.gimaFeatureClient.rpc("gima_dashboard_response_counts",{p_organization_id:orgId});
+    if(document.getElementById("org-select")?.value!==orgId)return;
+    responseCounts={orgId,rows:data||[],error,loading:false};
+    renderExecutive();
+  };
+    const renderExecutive=()=>{
     execCards.replaceChildren();visualGrid.replaceChildren();
     const summaries=(featureState.summaries||[]).filter(x=>!x.error);
     const valid=summaries.flatMap(x=>x.data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null).map(q=>({...q,surveyTitle:x.survey.title})));
@@ -238,7 +248,9 @@ const setup=()=>{
       const counts=x.data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null).map(q=>Number(q.response_count));
       return counts.length&&counts.every(n=>n===counts[0])?counts[0]:null;
     });
-    executiveCard("Total Responden","—","Butuh agregat responden unik; jumlah respons per pertanyaan tidak setara dengan jumlah orang");
+    const counts=responseCounts.orgId===featureState.orgId?responseCounts:null;
+    const totalResponses=counts?.rows?.reduce((sum,row)=>sum+Number(row.response_count||0),0);
+    executiveCard("Total Pengisian Survei",counts?.loading?"Memuat...":counts?.error?"—":counts?.rows?new Intl.NumberFormat("id-ID").format(totalResponses):"—",counts?.error?"Gagal memuat data: "+(counts.error.code||counts.error.message):"Jumlah pengisian yang menyetujui penggunaan data; bukan orang unik lintas survei");
     executiveCard("Engagement Score",percent(avg(engagement)),engagement.length+" pertanyaan relevan • indeks skor 1–5, bukan ukuran tervalidasi");
     executiveCard("Tingkat Kepuasan",percent(avg(satisfaction)),satisfaction.length+" pertanyaan relevan • indeks skor, bukan persentase karyawan puas");
     executiveCard("Turnover Rate","—","Memerlukan data HR karyawan keluar dan rata-rata headcount");
