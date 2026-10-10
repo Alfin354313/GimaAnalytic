@@ -227,16 +227,23 @@ const setup=()=>{
     card.append(heading,note,body);visualGrid.append(card);return body;
   };
   let responseCounts={orgId:null,rows:null,error:null,loading:false};
+  let responseRequestId=0;
   const fetchResponseCounts=async(orgId)=>{
     if(!orgId||!window.gimaFeatureClient)return;
+    const requestId=++responseRequestId;
     responseCounts={orgId,rows:null,error:null,loading:true};
     renderExecutive();
-    const {data,error}=await window.gimaFeatureClient.rpc("gima_dashboard_response_counts",{p_organization_id:orgId});
-    if(document.getElementById("org-select")?.value!==orgId)return;
-    responseCounts={orgId,rows:data||[],error,loading:false};
+    try{
+      const {data,error}=await window.gimaFeatureClient.rpc("gima_dashboard_response_counts",{p_organization_id:orgId});
+      if(requestId!==responseRequestId||document.getElementById("org-select")?.value!==orgId)return;
+      responseCounts={orgId,rows:error?null:(data||[]),error,loading:false};
+    }catch(error){
+      if(requestId!==responseRequestId||document.getElementById("org-select")?.value!==orgId)return;
+      responseCounts={orgId,rows:null,error,loading:false};
+    }
     renderExecutive();
   };
-    const renderExecutive=()=>{
+  const renderExecutive=()=>{
     execCards.replaceChildren();visualGrid.replaceChildren();
     const summaries=(featureState.summaries||[]).filter(x=>!x.error);
     const valid=summaries.flatMap(x=>x.data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null).map(q=>({...q,surveyTitle:x.survey.title})));
