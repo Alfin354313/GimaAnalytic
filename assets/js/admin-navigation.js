@@ -18,7 +18,7 @@ const setup=()=>{
   const navList=document.createElement("div");navList.className="gima-sidebar-links";sidebar.append(navList);
   const main=document.createElement("div");main.className="gima-admin-main";
   const groups=[
-    ["overview","Ringkasan","layout-dashboard",[org,readiness]],
+    ["overview","Dashboard","layout-dashboard",[org,readiness]],
     ["surveys","Survei","clipboard-list",[create,survey]],
     ["team","Tim Organisasi","users",[team]],
     ["billing","Kontrak & Tagihan","receipt",[billing]]
@@ -32,6 +32,40 @@ const setup=()=>{
     const btn=document.createElement("button");btn.type="button";btn.className="gima-sidebar-link";const symbol=document.createElement("span");symbol.className="gima-nav-icon";symbol.setAttribute("aria-hidden","true");symbol.textContent=({"layout-dashboard":"▦","clipboard-list":"▤","users":"♙","receipt":"▧"})[icon]||"•";btn.append(symbol,document.createTextNode(label));btn.dataset.target=key;btn.addEventListener("click",()=>select(key));navList.append(btn);buttons.set(key,btn);
     const option=document.createElement("option");option.value=key;option.textContent=label;mobile.append(option);
   }
+  // Mockup-inspired overview: live counts only, no invented analytics.
+  const overview=sections.get("overview");
+  const heading=overview.querySelector(".gima-view-heading");heading.textContent="Dashboard";
+  const kpis=document.createElement("div");kpis.className="gima-kpi-grid";
+  const stats=[
+    ["Total Survei","stat-total","Survei dalam organisasi"],
+    ["Survei Aktif","stat-published","Telah dipublikasikan"],
+    ["Survei Draft","stat-draft","Belum dipublikasikan"],
+    ["Survei Selesai",null,"Status selesai"]
+  ];
+  for(const [label,id,note] of stats){
+    const card=document.createElement("article");card.className="gima-kpi-card";
+    const caption=document.createElement("span");caption.textContent=label;
+    const value=document.createElement("strong");value.textContent="—";
+    const hint=document.createElement("small");hint.textContent=note;
+    card.append(caption,value,hint);kpis.append(card);
+    if(id){
+      const source=document.getElementById(id);
+      if(source){const update=()=>{value.textContent=source.textContent||"0";};update();new MutationObserver(update).observe(source,{childList:true,characterData:true,subtree:true});}
+    }else{
+      const update=()=>{
+        const active=document.getElementById("stat-total"),draft=document.getElementById("stat-draft"),published=document.getElementById("stat-published");
+        if(active&&draft&&published){const total=Number(active.textContent)||0;const d=Number(draft.textContent)||0;const p=Number(published.textContent)||0;value.textContent=String(Math.max(0,total-d-p));}
+      };
+      for(const id of ["stat-total","stat-draft","stat-published"]){const node=document.getElementById(id);if(node)new MutationObserver(update).observe(node,{childList:true,characterData:true,subtree:true});}
+      update();
+    }
+  }
+  overview.insertBefore(kpis,org);
+  const dashboardGrid=document.createElement("div");dashboardGrid.className="gima-overview-grid";
+  overview.append(dashboardGrid);dashboardGrid.append(org,readiness);
+  const orgHeading=org.querySelector("h2");if(orgHeading)orgHeading.textContent="Organisasi & Pengaturan";
+  const readyHeading=readiness.querySelector("h2");if(readyHeading)readyHeading.textContent="Ringkasan Operasional";
+  const sidebarFoot=document.createElement("div");sidebarFoot.className="gima-sidebar-foot";sidebarFoot.textContent="People Analytics • HR Survey";sidebar.append(sidebarFoot);
   const email=panel.querySelector(":scope > .admin-meta");if(email)main.prepend(email);
   grid.replaceWith(shell);shell.append(sidebar,main);
   const select=key=>{
