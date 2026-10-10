@@ -35,6 +35,29 @@ async function loadMembers(orgId){
     root.append(row);
   }
   root.append(el("p","Jumlah yang terlihat: "+data.length+" anggota. Angka mengikuti izin akses akun Anda.","admin-meta"));
+  const permissions=el("div",undefined,"member-permissions");
+  permissions.append(el("h3","Panduan Hak Akses"));
+  const matrix=el("table",undefined,"member-permission-table");
+  const thead=el("thead"),headRow=el("tr");
+  for(const title of ["Peran","Lihat survei","Kelola survei"]){headRow.append(el("th",title));}
+  thead.append(headRow);matrix.append(thead);
+  const body=el("tbody");
+  for(const [r,read,write] of [["Pemilik","Ya","Ya"],["Admin","Ya","Ya"],["Anggota","Sesuai RLS","Tidak"]]){
+    const tr=el("tr");for(const value of [r,read,write])tr.append(el("td",value));body.append(tr);
+  }
+  matrix.append(body);permissions.append(matrix);
+  permissions.append(el("p","Ringkasan ini menggambarkan aturan tampilan dashboard. Izin sesungguhnya ditentukan kebijakan RLS dan fungsi Supabase.","admin-meta"));
+  root.append(permissions);
+  if(canEdit()){
+    const exportButton=action("Unduh Ringkasan Tim (CSV)",()=>{
+      const cell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+      const rows=[["Organisasi","Peran","Jumlah terlihat"],...Array.from(counts,([r,n])=>[orgs.find(o=>o.id===orgId)?.name||"",r,n])];
+      const blob=new Blob(["\uFEFF"+rows.map(row=>row.map(cell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob),link=document.createElement("a");
+      link.href=url;link.download="gima-ringkasan-tim.csv";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    exportButton.className="member-export";root.append(exportButton);
+  }
 }
 function action(label,fn){const b=el("button",label);b.type="button";b.addEventListener("click",fn);return b;}
 function renderSurveys(){
