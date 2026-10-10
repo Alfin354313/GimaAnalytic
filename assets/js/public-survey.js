@@ -28,12 +28,13 @@ async function load(){
  const controls=document.createElement("section");controls.className="response-card";
  const consent=document.createElement("label");const check=document.createElement("input");check.type="checkbox";
  consent.append(check,document.createTextNode(" Saya memahami tujuan survei dan menyetujui pemrosesan jawaban anonim saya untuk analisis agregat."));controls.append(consent);
+ const tokenLabel=document.createElement("label");tokenLabel.textContent="Kode undangan sekali pakai";const tokenInput=document.createElement("input");tokenInput.type="text";tokenInput.autocomplete="off";tokenInput.placeholder="Masukkan kode dari pengelola";tokenInput.maxLength=64;tokenInput.value=new URLSearchParams(location.search).get("token")||"";tokenLabel.append(tokenInput);controls.append(tokenLabel);
  const progress=document.createElement("p");progress.setAttribute("role","status");controls.append(progress);
- const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban (belum aktif)";button.disabled=true;controls.append(button);
+ const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban";button.disabled=true;controls.append(button);
  root.append(controls);
- function refresh(){progress.textContent="Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan");}
- check.addEventListener("change",refresh);refresh();
- $("public-status").textContent="Formulir dapat diuji. Jawaban belum dikirim atau disimpan.";
+ function refresh(){button.disabled=!(answers.size===questions.length&&check.checked&&/^[0-9a-f]{64}$/.test(tokenInput.value.trim()));progress.textContent="Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan");}
+ check.addEventListener("change",refresh);tokenInput.addEventListener("input",refresh);button.addEventListener("click",async()=>{if(button.disabled)return;button.disabled=true;button.textContent="Mengirim...";const payload=questions.map(q=>({question_id:q.id,score:answers.get(q.id)}));const {error}=await client.rpc("gima_submit_invited_survey",{p_survey_id:id,p_token:tokenInput.value.trim(),p_answers:payload,p_consented:check.checked});if(error){$("public-status").textContent="Gagal mengirim: "+(error.message||"Periksa kode undangan dan coba lagi.");button.textContent="Kirim Jawaban";refresh();return;}root.replaceChildren();$("public-status").textContent="Terima kasih! Jawaban berhasil disimpan. Kode undangan ini tidak dapat digunakan lagi.";});refresh();
+ $("public-status").textContent="Jawaban hanya dapat dikirim menggunakan kode undangan sekali pakai setelah SQL Tahap 7 terbaru dijalankan.";
 }
 load().catch(e=>{$("public-title").textContent="Survei belum tersedia";$("public-status").textContent=e.message;});
 })();
