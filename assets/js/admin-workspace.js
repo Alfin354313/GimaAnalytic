@@ -80,6 +80,9 @@ async function openReport(s){
   executive.append(kpis);
   executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Perbandingan hanya dapat dibuat dari pertanyaan yang identik dan memenuhi ambang privasi.","admin-meta"));
   root.append(executive);
+  const printButton=action("Cetak / Simpan PDF",()=>window.print());
+  printButton.className="report-download report-print-button";
+  root.append(printButton);
   renderPeriodComparison(root,s,data);
   if(ready.length){
     const overall=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
