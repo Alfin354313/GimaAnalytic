@@ -87,7 +87,53 @@ async function openReport(s){
     list.append(item);
   }
   root.append(list);
+  if(ready.length>=2){
+    const ranked=[...ready].sort((a,b)=>Number(b.average_score)-Number(a.average_score));
+    const insights=el("section",undefined,"report-insights");
+    insights.append(el("h3","Insight Otomatis"));
+    const high=ranked[0],low=ranked[ranked.length-1];
+    const intro=el("p","Ringkasan deskriptif berdasarkan rata-rata skor pertanyaan yang memenuhi minimum 5 respons. Ini bukan diagnosis organisasi.","admin-meta");
+    insights.append(intro);
+    const best=el("p");best.append(el("strong","Skor tertinggi: "),document.createTextNode(high.question_prompt+" ("+Number(high.average_score).toFixed(2)+"/5)."));insights.append(best);
+    const worst=el("p");worst.append(el("strong","Skor terendah: "),document.createTextNode(low.question_prompt+" ("+Number(low.average_score).toFixed(2)+"/5)."));insights.append(worst);
+    const diff=Number(high.average_score)-Number(low.average_score);
+    insights.append(el("p","Selisih skor tertinggi dan terendah: "+diff.toFixed(2)+" poin. Tinjau pertanyaan dengan skor rendah bersama konteks organisasi sebelum menentukan tindakan.","admin-meta"));
+    root.append(insights);
+    const advice=el("section",undefined,"report-insights report-recommendations");
+    advice.append(el("h3","Rekomendasi Tindakan"));
+    advice.append(el("p","Saran awal berbasis skor agregat. Verifikasi bersama karyawan dan pemangku kepentingan sebelum menetapkan program.","admin-meta"));
+    const lowScore=Number(low.average_score);
+    const text=String(low.question_prompt||"").toLocaleLowerCase("id-ID");
+    let actions;
+    if(/karier|karir|pengembang|promosi|pelatihan|kompetensi/.test(text)){
+      actions=["Tinjau transparansi jalur karier dan kriteria promosi.","Diskusikan kebutuhan pelatihan dan pengembangan dengan karyawan.","Tetapkan indikator tindak lanjut dan evaluasi ulang pada survei berikutnya."];
+    }else if(/atasan|pemimpin|manajer|dukungan|supervisor/.test(text)){
+      actions=["Lakukan diskusi terstruktur tentang dukungan dari atasan.","Evaluasi praktik umpan balik dan komunikasi manajer.","Uji perbaikan secara terbatas dan ukur kembali hasilnya."];
+    }else if(/lingkungan|produktivit|fasilitas|beban kerja|kerja sama/.test(text)){
+      actions=["Petakan hambatan kerja dan kebutuhan fasilitas bersama tim.","Tinjau pembagian beban kerja dan proses kolaborasi.","Prioritaskan perbaikan yang dapat diuji serta dievaluasi."];
+    }else if(/puas|kepuasan|rekomendasi|perusahaan/.test(text)){
+      actions=["Gali faktor penyebab skor rendah melalui forum umpan balik sukarela.","Evaluasi kebijakan dan pengalaman kerja yang relevan.","Rencanakan tindakan perbaikan yang terukur dan survei ulang."];
+    }else{
+      actions=["Bahas pertanyaan dengan skor terendah bersama perwakilan karyawan.","Kumpulkan konteks tambahan secara sukarela tanpa mengungkap identitas responden.","Tentukan perbaikan yang terukur dan evaluasi pada periode berikutnya."];
+    }
+    advice.append(el("p","Area prioritas: "+low.question_prompt+" ("+lowScore.toFixed(2)+"/5)."));
+    const ul=el("ul");for(const item of actions)ul.append(el("li",item));advice.append(ul);
+    if(lowScore>=3.5)advice.append(el("p","Seluruh skor yang ditampilkan relatif tinggi; rekomendasi ini bersifat pemeliharaan dan peningkatan berkelanjutan.","admin-meta"));
+    const plan=action("Unduh Rencana Tindak Lanjut (CSV)",()=>downloadActionPlan(s,low,actions));
+    plan.className="report-download";advice.append(plan);
+    root.append(advice);
+  }
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function downloadActionPlan(s,priority,actions){
+  const cell=value=>'"'+String(value??"").replace(/"/g,'""')+'"';
+  const rows=[["Survei","Area prioritas","Skor rata-rata","Rencana tindakan","Penanggung jawab","Target selesai","Status"],
+    ...actions.map(item=>[s.title,priority.question_prompt,Number(priority.average_score).toFixed(2),item,"","","Belum dimulai"])];
+  const content="\uFEFF"+rows.map(row=>row.map(cell).join(",")).join("\r\n");
+  const blob=new Blob([content],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download="gima-rencana-tindakan-"+s.id+".csv";
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function downloadReport(s,data){
   const csvCell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
