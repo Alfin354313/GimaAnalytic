@@ -27,6 +27,7 @@ function renderSurveys(){
     const actions=el("div",undefined,"admin-actions");
     actions.append(action("Pertanyaan",()=>openQuestions(s)));
     actions.append(action("Laporan",()=>openReport(s)));
+    if(s.status==="published")actions.append(action("Salin Link Survei",async()=>{const link=new URL("/isi-survei.html?id="+encodeURIComponent(s.id),window.location.origin).href;try{await navigator.clipboard.writeText(link);say("Link survei disalin. Formulir saat ini hanya pratinjau; pengiriman jawaban belum aktif.");}catch{window.prompt("Salin link survei (pratinjau):",link);}}));
     if(canEdit()){
       if(s.status==="draft"){
         actions.append(action("Ubah judul",async()=>{const title=window.prompt("Judul survei (3–160 karakter):",s.title);if(title===null)return;const t=title.trim();if(t.length<3||t.length>160){say("Judul harus 3–160 karakter.");return;}await updateSurvey(s,{title:t});}));
