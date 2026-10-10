@@ -30,7 +30,8 @@ form.addEventListener("submit",async event=>{
       if(code==="invalid_credentials")say("Email atau password tidak cocok. Periksa kembali atau atur ulang password melalui Supabase.");
       else if(code==="email_not_confirmed")say("Email belum dikonfirmasi di Supabase Authentication.");
       else if(code==="over_request_rate_limit"||code==="over_email_send_rate_limit")say("Terlalu banyak percobaan login. Tunggu beberapa saat sebelum mencoba kembali.");
-      else say("Supabase menolak login ("+(code||"HTTP "+(error.status||"tidak diketahui"))+"). Periksa Authentication Logs.");
+      else if(error.name==="AuthRetryableFetchError"||error.message==="Failed to fetch"||error.message==="Load failed")say("Browser tidak dapat menghubungi Supabase. Periksa Network di Developer Tools (permintaan /auth/v1/token), koneksi internet, dan URL Supabase.");
+      else say("Login gagal: "+(code||error.name||"kesalahan tidak diketahui")+(error.status?" (HTTP "+error.status+")":"")+". Periksa Authentication Logs.");
       return;
     }
     if(!data?.session||!data?.user){say("Login belum menghasilkan sesi. Periksa Authentication Logs.");return;}
