@@ -18,6 +18,9 @@ begin
  if to_regprocedure('public.gima_submit_survey(uuid,jsonb,boolean)') is null then
    raise exception 'Missing public.gima_submit_survey(uuid,jsonb,boolean). Install Phase 7 first.';
  end if;
+ if (select p.prorettype from pg_catalog.pg_proc p where p.oid=to_regprocedure('public.gima_submit_survey(uuid,jsonb,boolean)')) <> 'uuid'::regtype then
+   raise exception 'Public submission function does not return uuid. Inspect existing return type before installing Phase 8.';
+ end if;
  if to_regprocedure('public.gima_submit_survey_internal_phase8(uuid,jsonb,boolean)') is not null then
    raise exception 'Phase 8 throttle already installed. Do not rerun migration.';
  end if;
