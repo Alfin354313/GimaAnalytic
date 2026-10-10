@@ -45,32 +45,137 @@ const setup=()=>{
   const linkButton=(label,callback)=>{
     const button=document.createElement("button");button.type="button";button.className="btn outline";button.textContent=label;button.addEventListener("click",callback);return button;
   };
-  const surveyCards=(panel,mode)=>{
-    const old=panel.querySelector(".gima-feature-list");if(old)old.remove();
-    const list=document.createElement("div");list.className="gima-feature-list";panel.append(list);
-    const cards=[...document.querySelectorAll("#survey-list .admin-survey")];
-    if(!cards.length){const empty=document.createElement("p");empty.className="admin-meta";empty.textContent="Belum ada survei yang dapat ditampilkan.";list.append(empty);return;}
-    for(const card of cards){
-      const item=document.createElement("div");item.className="gima-feature-row";
-      const name=document.createElement("strong");name.textContent=card.querySelector("h3")?.textContent||"Survei";
-      const actions=document.createElement("div");actions.className="gima-feature-actions";
-      const report=[...card.querySelectorAll("button")].find(b=>b.textContent.trim()==="Laporan");
-      const share=[...card.querySelectorAll("button")].find(b=>b.textContent.includes("Salin Link"));
-      if(mode==="respondents"){
-        if(share)actions.append(linkButton("Salin link pengisian",()=>share.click()));
-        if(report)actions.append(linkButton("Lihat ringkasan respons",()=>{select("surveys");report.click();}));
-      }else if(report)actions.append(linkButton(mode==="analysis"?"Buka analisis":"Buka laporan",()=>{select("surveys");report.click();}));
-      item.append(name,actions);list.append(item);
-    }
+  const featurePanels={
+    respondents:makePanel("respondents","Bagikan survei dan pantau kesiapan data responden. Identitas individu tidak ditampilkan."),
+    analysis:makePanel("analysis","Analisis agregat berbasis jawaban valid. Hasil dengan kurang dari lima respons disembunyikan."),
+    reports:makePanel("reports","Laporan siap ditinjau, dicetak ke PDF, atau diekspor dari hasil survei yang memenuhi batas privasi."),
+    settings:makePanel("settings","Informasi akun, organisasi, keamanan akses, dan pengelolaan tim.")
   };
-  const respondentPanel=makePanel("respondents","Kelola akses pengisian survei dan lihat ringkasan respons tanpa membuka identitas individu. Jumlah respons hanya ditampilkan pada laporan yang memenuhi ambang privasi.");
-  const analysisPanel=makePanel("analysis","Analisis memakai hasil nyata dari fungsi ringkasan survei Supabase. Pilih survei untuk membuka analitik yang sudah tersedia.");
-  const reportsPanel=makePanel("reports","Laporan survei tersedia pada modul survei, dengan perlindungan minimum lima respons valid per pertanyaan.");
-  const settingsPanel=makePanel("settings","Pengaturan organisasi dan anggota menggunakan fungsi yang sudah tersedia. Perubahan profil perusahaan, rekening, dan logo belum tersedia.");
-  settingsPanel.append(linkButton("Buka pengaturan organisasi",()=>{select("overview");org.scrollIntoView({behavior:"smooth",block:"start"});}),linkButton("Kelola tim organisasi",()=>select("team")));
-  const refreshFeatures=()=>{surveyCards(respondentPanel,"respondents");surveyCards(analysisPanel,"analysis");surveyCards(reportsPanel,"reports");};
-  document.addEventListener("gima:surveys-loaded",()=>requestAnimationFrame(refreshFeatures));
-  refreshFeatures();
+  const addHeading=(root,title)=>{const h=document.createElement("h3");h.textContent=title;root.append(h);};
+  const addNote=(root,text)=>{const p=document.createElement("p");p.className="admin-meta";p.textContent=text;root.append(p);};
+  const addMetric=(root,label,value,note)=>{
+    const card=document.createElement("div");card.className="gima-feature-metric";
+    const labelNode=document.createElement("span");labelNode.textContent=label;
+    const number=document.createElement("strong");number.textContent=String(value);
+    const caption=document.createElement("small");caption.textContent=note;
+    card.append(labelNode,number,caption);root.append(card);
+  };
+  const metricGrid=(root)=>{const grid=document.createElement("div");grid.className="gima-feature-metrics";root.append(grid);return grid;};
+  const featureState={orgId:null,rows:[],loading:false};
+  const getCards=()=>[...document.querySelectorAll("#survey-list .admin-survey")];
+  const makeRows=(root,mode)=>{
+    const list=document.createElement("div");list.className="gima-feature-list";root.append(list);
+    for(const card of getCards()){
+      const item=document.createElement("div");item.className="gima-feature-row";
+      const left=document.createElement("div");left.className="gima-feature-description";
+      const title=document.createElement("strong");title.textContent=card.querySelector("h3")?.textContent||"Survei";
+      const status=card.querySelector(".admin-meta:last-of-type");
+      left.append(title);
+      if(status)addNote(left,status.textContent);
+      const actions=document.createElement("div");actions.className="gima-feature-actions";
+      const buttons=[...card.querySelectorAll("button")];
+      const report=buttons.find(b=>b.textContent.trim()==="Laporan");
+      const share=buttons.find(b=>b.textContent.includes("Salin Link"));
+      if(mode==="respondents"){
+        if(share)actions.append(linkButton("Salin link survei",()=>share.click()));
+        if(report)actions.append(linkButton("Ringkasan jawaban",()=>{select("surveys");report.click();}));
+      }else if(report)actions.append(linkButton(mode==="analysis"?"Analisis lengkap":"Lihat laporan & PDF",()=>{select("surveys");report.click();}));
+      item.append(left,actions);list.append(item);
+    }
+    if(!getCards().length)addNote(list,"Belum ada survei di organisasi ini.");
+  };
+  const surveyData=async()=>{
+    const id=document.getElementById("org-select")?.value;
+    if(!id||featureState.orgId!==id)return;
+    featureState.loading=true;
+    const cards=getCards();
+    const summaries=[];
+    for(let index=0;index<cards.length;index++){
+      const report=cards[index].querySelector("button");
+      // Survey IDs are supplied from the workspace rather than parsed from visible text.
+      // A dedicated event passes the safe IDs in the same order as the rendered survey cards.
+      const survey=featureState.rows[index];
+      if(!survey?.id)continue;
+      const {data,error}=await window.gimaFeatureClient.rpc("gima_survey_summary",{p_survey_id:survey.id});
+      if(featureState.orgId!==id)return;
+      summaries.push({survey,data:data||[],error});
+    }
+    featureState.summaries=summaries;featureState.loading=false;renderFeatures();
+  };
+  const renderFeatures=()=>{
+    const {respondents,analysis,reports,settings}=featurePanels;
+    for(const root of Object.values(featurePanels))root.querySelectorAll(".gima-feature-dynamic").forEach(n=>n.remove());
+    const area=root=>{const node=document.createElement("div");node.className="gima-feature-dynamic";root.append(node);return node;};
+    const rs=area(respondents),an=area(analysis),rp=area(reports),st=area(settings);
+    const rows=featureState.rows;
+    const summary=featureState.summaries||[];
+    const eligible=summary.filter(x=>!x.error&&x.data.some(q=>Number(q.response_count)>=5&&q.average_score!==null));
+    addHeading(rs,"Ringkasan pengumpulan");
+    let metrics=metricGrid(rs);
+    addMetric(metrics,"Total survei",rows.length,"Seluruh status");
+    addMetric(metrics,"Survei dipublikasikan",rows.filter(x=>x.status==="published").length,"Dapat menerima respons");
+    addMetric(metrics,"Siap dianalisis",eligible.length,"Minimal satu pertanyaan memenuhi ambang privasi");
+    addHeading(rs,"Survei & akses responden");makeRows(rs,"respondents");
+    addNote(rs,"Jumlah responden unik tidak ditampilkan karena belum tersedia sebagai metrik terverifikasi. Gunakan ringkasan respons per pertanyaan.");
+    addHeading(an,"Ringkasan hasil analitik");
+    metrics=metricGrid(an);
+    addMetric(metrics,"Survei tersedia",rows.length,"Dalam organisasi");
+    addMetric(metrics,"Hasil dapat dianalisis",eligible.length,"Minimal lima respons valid per pertanyaan");
+    addMetric(metrics,"Menunggu kecukupan data",summary.filter(x=>!x.error).length-eligible.length,"Belum melewati ambang privasi");
+    if(featureState.loading)addNote(an,"Memuat hasil analisis...");
+    for(const {survey,data,error} of summary){
+      const box=document.createElement("section");box.className="gima-feature-result";addHeading(box,survey.title);
+      if(error)addNote(box,"Analisis belum dapat diakses: "+(error.code||error.message));
+      else{
+        const ready=data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null);
+        if(!ready.length)addNote(box,"Belum cukup respons untuk menampilkan skor.");
+        else{
+          const average=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
+          addNote(box,"Rata-rata "+average.toFixed(2)+" / 5 dari "+ready.length+" pertanyaan yang memenuhi ambang privasi.");
+          for(const q of ready.slice(0,6)){
+            const line=document.createElement("div");line.className="gima-feature-score";
+            const title=document.createElement("span");title.textContent=q.question_prompt;
+            const track=document.createElement("div");track.className="gima-feature-track";
+            const fill=document.createElement("i");fill.style.width=Math.min(100,Math.max(0,Number(q.average_score)*20))+"%";track.append(fill);
+            const score=document.createElement("b");score.textContent=Number(q.average_score).toFixed(2)+"/5";
+            line.append(title,track,score);box.append(line);
+          }
+        }
+      }
+      an.append(box);
+    }
+    addHeading(an,"Analisis per survei");makeRows(an,"analysis");
+    addHeading(rp,"Kesiapan laporan");
+    metrics=metricGrid(rp);
+    addMetric(metrics,"Total laporan potensial",rows.length,"Satu per survei");
+    addMetric(metrics,"Memiliki hasil terbuka",eligible.length,"Ada skor yang lolos batas privasi");
+    addMetric(metrics,"Perlu data tambahan",summary.filter(x=>!x.error).length-eligible.length,"Skor belum dapat ditampilkan");
+    addHeading(rp,"Daftar laporan");makeRows(rp,"reports");
+    addNote(rp,"Gunakan tombol Lihat laporan & PDF untuk membuka laporan resmi, grafik, rekomendasi, unduhan CSV, dan fitur Cetak / Simpan PDF yang sudah tersedia.");
+    addHeading(st,"Organisasi aktif");
+    const selectOrg=document.getElementById("org-select");
+    const orgName=selectOrg?.selectedOptions?.[0]?.textContent||"Belum dipilih";
+    const role=document.getElementById("org-role")?.textContent||"Belum diketahui";
+    const info=document.createElement("div");info.className="gima-feature-settings";
+    for(const [label,value] of [["Nama organisasi",orgName],["Hak akses Anda",role],["Jumlah survei",String(rows.length)]]){
+      const item=document.createElement("div");const l=document.createElement("span");l.textContent=label;const v=document.createElement("strong");v.textContent=value;item.append(l,v);info.append(item);
+    }
+    st.append(info);
+    addHeading(st,"Pengelolaan");
+    const controls=document.createElement("div");controls.className="gima-feature-actions";
+    controls.append(linkButton("Pilih organisasi",()=>{select("overview");org.scrollIntoView({behavior:"smooth",block:"start"});}),linkButton("Kelola anggota tim",()=>select("team")),linkButton("Kontrak & tagihan",()=>select("billing")));
+    st.append(controls);
+    addHeading(st,"Keamanan & privasi");
+    addNote(st,"Hak akses dikendalikan oleh Supabase Row Level Security. Analitik hanya menampilkan agregat yang memenuhi ambang minimum lima respons valid per pertanyaan.");
+    addNote(st,"Perubahan email, kata sandi, logo organisasi, dan rekening pembayaran belum tersedia melalui panel ini.");
+  };
+  document.addEventListener("gima:surveys-loaded",event=>{
+    const detail=event.detail||{};
+    if(detail.orgId){featureState.orgId=detail.orgId;featureState.rows=detail.surveys||[];featureState.summaries=[];}
+    requestAnimationFrame(renderFeatures);
+    if(detail.orgId&&window.gimaFeatureClient)surveyData();
+  });
+  renderFeatures();
   // Mockup-inspired overview: live counts only, no invented analytics.
   const overview=sections.get("overview");
   const heading=overview.querySelector(".gima-view-heading");heading.textContent="Dashboard";
