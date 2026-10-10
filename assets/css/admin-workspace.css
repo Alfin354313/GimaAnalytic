@@ -35,3 +35,5 @@
 }
 
 #members-panel .admin-stat strong{font-size:18px}
+
+.member-permissions{margin-top:18px}.member-permissions h3{font-size:16px;margin:0 0 10px}.member-permission-table{width:100%;border-collapse:collapse;font-size:12px}.member-permission-table th,.member-permission-table td{padding:9px 5px;text-align:left;border-bottom:1px solid #dcebf0}.member-permission-table th{color:#31566b}.member-export{margin-top:12px;border:1px solid #b8d6dd;background:#fff;border-radius:8px;padding:9px 12px;color:#174e7d;cursor:pointer;font:inherit;font-size:13px}@media print{#members-panel{display:none!important}}
