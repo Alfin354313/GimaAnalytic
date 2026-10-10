@@ -214,3 +214,13 @@ nav.gima-admin-sidebar{position:relative;top:auto;border-radius:0;min-height:660
 @media(max-width:1080px){.gima-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gima-overview-grid{grid-template-columns:1fr}}
 @media(max-width:850px){.gima-admin-shell{display:block}.gima-admin-sidebar{min-height:0!important}.gima-admin-main{padding:18px}.gima-sidebar-foot{display:none}}
 @media(max-width:480px){.gima-kpi-grid{gap:8px}.gima-kpi-card{padding:13px 11px}.gima-kpi-card strong{font-size:23px}.gima-admin-main{padding:12px}}
+
+
+.gima-feature-panel{display:grid;gap:14px}
+.gima-feature-list{display:grid;gap:12px}
+.gima-feature-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:#f6fbfd;border:1px solid #dcebf1;border-radius:12px;padding:15px}
+.gima-feature-row strong{font-size:14px;color:#133a52}
+.gima-feature-actions{display:flex;flex-wrap:wrap;gap:8px}
+.gima-feature-actions .btn{font-size:12px;padding:9px 12px}
+.gima-feature-panel>.btn{justify-self:start}
+@media(max-width:850px){.gima-feature-row{align-items:flex-start;flex-direction:column}}
