@@ -27,11 +27,11 @@ function renderSurveys(){
     const actions=el("div",undefined,"admin-actions");
     actions.append(action("Pertanyaan",()=>openQuestions(s)));
     actions.append(action("Laporan",()=>openReport(s)));
-    if(s.status==="published")actions.append(action("Salin Link Survei",async()=>{const link=new URL("/isi-survei.html?id="+encodeURIComponent(s.id),window.location.origin).href;try{await navigator.clipboard.writeText(link);say("Link survei disalin. Formulir saat ini hanya pratinjau; pengiriman jawaban belum aktif.");}catch{window.prompt("Salin link survei (pratinjau):",link);}}));
+    if(s.status==="published")actions.append(action("Salin Link Survei",async()=>{const link=new URL("/isi-survei.html?id="+encodeURIComponent(s.id),window.location.origin).href;try{await navigator.clipboard.writeText(link);say("Link survei disalin. Bagikan tautan ini kepada responden.");}catch{window.prompt("Salin link survei:",link);}}));
     if(canEdit()){
       if(s.status==="draft"){
         actions.append(action("Ubah judul",async()=>{const title=window.prompt("Judul survei (3–160 karakter):",s.title);if(title===null)return;const t=title.trim();if(t.length<3||t.length>160){say("Judul harus 3–160 karakter.");return;}await updateSurvey(s,{title:t});}));
-        actions.append(action("Publikasikan",async()=>{const {count,error}=await client.from("survey_questions").select("id",{count:"exact",head:true}).eq("survey_id",s.id);if(error){say("Tidak dapat memeriksa pertanyaan.");return;}if(!count){say("Tambahkan minimal satu pertanyaan sebelum publikasi.");return;}if(window.confirm("Publikasikan survei? Pengumpulan jawaban publik belum diaktifkan."))await updateSurvey(s,{status:"published"});}));
+        actions.append(action("Publikasikan",async()=>{const {count,error}=await client.from("survey_questions").select("id",{count:"exact",head:true}).eq("survey_id",s.id);if(error){say("Tidak dapat memeriksa pertanyaan.");return;}if(!count){say("Tambahkan minimal satu pertanyaan sebelum publikasi.");return;}if(window.confirm("Publikasikan survei dan aktifkan pengumpulan jawaban publik?"))await updateSurvey(s,{status:"published"});}));
         actions.append(action("Hapus draft",async()=>{if(!window.confirm("Hapus draft beserta pertanyaannya?"))return;const {error}=await client.from("surveys").delete().eq("id",s.id).eq("organization_id",$("org-select").value);if(error){say("Gagal menghapus: "+(error.code||error.message));return;}say("Draft dihapus.");await loadSurveys();}));
       }else if(s.status==="published"){
         actions.append(action("Tutup survei",async()=>{if(window.confirm("Tutup survei ini?"))await updateSurvey(s,{status:"closed"});}));
@@ -50,19 +50,53 @@ async function openReport(s){
   $("question-panel").hidden=false;
   $("question-heading").textContent="Laporan: "+s.title;
   $("question-form").hidden=true;
-  const root=$("question-list");root.replaceChildren();
-  root.append(el("p","Memuat ringkasan...","admin-meta"));
+  const root=$("question-list");root.replaceChildren(el("p","Memuat analitik survei...","admin-meta"));
   const {data,error}=await client.rpc("gima_survey_summary",{p_survey_id:s.id});
   root.replaceChildren();
-  if(error){root.append(el("p","Laporan belum tersedia. Jalankan SQL Tahap 7 terlebih dahulu. ("+(error.code||"error")+")","admin-meta"));return;}
-  if(!data?.length){root.append(el("p","Belum ada pertanyaan.","admin-meta"));return;}
-  for(const q of data){
-    const line=el("div",undefined,"admin-question");
+  if(error){root.append(el("p","Laporan tidak dapat dimuat: "+(error.code||error.message),"admin-meta"));return;}
+  if(!data?.length){root.append(el("p","Belum ada pertanyaan dalam survei ini.","admin-meta"));return;}
+  const ready=data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null);
+  const heading=el("div",undefined,"report-overview");
+  heading.append(el("strong",ready.length+" dari "+data.length+" pertanyaan memiliki hasil yang dapat ditampilkan"));
+  heading.append(el("p","Nilai hanya ditampilkan jika sedikitnya 5 respons valid tersedia pada pertanyaan tersebut. Angka 0 pada pertanyaan lain berarti hasil disembunyikan, bukan berarti tidak ada respons.","admin-meta"));
+  root.append(heading);
+  if(ready.length){
+    const overall=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
+    const card=el("div",undefined,"report-score");
+    card.append(el("span","Rata-rata dari pertanyaan yang memenuhi ambang privasi"),el("strong",overall.toFixed(2)+" / 5"));
+    root.append(card);
+    const download=action("Unduh CSV Ringkasan",()=>downloadReport(s,data));
+    download.className="report-download";
+    root.append(download);
+  }else root.append(el("p","Laporan agregat belum dapat ditampilkan. Tunggu hingga minimal 5 jawaban valid per pertanyaan.","admin-meta"));
+  const list=el("div",undefined,"report-chart");
+  for(const [index,q] of data.entries()){
     const count=Number(q.response_count)||0;
-    line.append(el("span",q.question_prompt),el("strong",count>=5?"Rata-rata "+Number(q.average_score).toFixed(2)+"/5":"Belum cukup respons (minimum 5)"));
-    root.append(line);
+    const valid=count>=5&&q.average_score!==null;
+    const item=el("div",undefined,"report-item");
+    item.append(el("div",(index+1)+". "+q.question_prompt,"report-question"));
+    if(valid){
+      const score=Number(q.average_score);
+      const line=el("div",undefined,"report-bar-line");
+      const track=el("div",undefined,"report-track");
+      const fill=el("div",undefined,"report-fill");fill.style.width=Math.max(0,Math.min(100,score/5*100))+"%";
+      track.setAttribute("role","img");track.setAttribute("aria-label","Skor rata-rata "+score.toFixed(2)+" dari 5");
+      track.append(fill);line.append(track,el("strong",score.toFixed(2)+" / 5"));item.append(line);
+      item.append(el("p",count+" respons valid","admin-meta"));
+    }else item.append(el("p","Hasil disembunyikan (minimum 5 respons)","admin-meta"));
+    list.append(item);
   }
+  root.append(list);
   $("question-panel").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function downloadReport(s,data){
+  const csvCell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const rows=[["Pertanyaan","Respons valid (jika >=5)","Rata-rata (1-5)"],...data.map(q=>{
+    const visible=Number(q.response_count)>=5&&q.average_score!==null;
+    return [q.question_prompt,visible?Number(q.response_count):"Disembunyikan",visible?Number(q.average_score).toFixed(2):"Disembunyikan"];
+  })];
+  const blob=new Blob(["\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="gima-laporan-"+s.id+".csv";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 async function openQuestions(s){
   activeSurvey=s;$("question-panel").hidden=false;$("question-heading").textContent="Pertanyaan: "+s.title;
@@ -96,7 +130,7 @@ async function init(){
   orgs=(organizations||[]).map(o=>({...o,role:members.find(m=>m.organization_id===o.id)?.role}));
   const select=$("org-select");for(const o of orgs){const opt=el("option",o.name);opt.value=o.id;select.append(opt);}
   select.addEventListener("change",()=>{say("");loadSurveys();});
-  $("admin-panel").hidden=false;status.textContent="Data organisasi siap. Pengumpulan respons publik belum diaktifkan.";
+  $("admin-panel").hidden=false;status.textContent="Data organisasi siap.";
   await loadSurveys();
 }
 $("create-form").addEventListener("submit",async e=>{

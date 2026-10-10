@@ -3,6 +3,9 @@ const $=id=>document.getElementById(id);
 const id=new URLSearchParams(location.search).get("id");
 const labels=["Sangat tidak setuju","Tidak setuju","Netral","Setuju","Sangat setuju"];
 const answers=new Map();
+const sentKey="gima-survey-submitted:"+id;
+const wasSubmitted=()=>{try{return localStorage.getItem(sentKey)==="yes";}catch{return false;}};
+const markSubmitted=()=>{try{localStorage.setItem(sentKey,"yes");}catch{}};
 if(!id||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){$("public-title").textContent="Link survei tidak valid";return;}
 async function load(){
  if(!window.GIMA_AUTH?.configured())throw Error("Konfigurasi Supabase belum tersedia");
@@ -31,7 +34,8 @@ async function load(){
  const progress=document.createElement("p");progress.setAttribute("role","status");controls.append(progress);
  const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban";button.disabled=true;controls.append(button);
  root.append(controls);
- let submitting=false;let submitted=false;let feedback="";
+ let submitting=false;let submitted=wasSubmitted();let feedback=submitted?"Browser ini sudah pernah mengirim jawaban untuk survei ini.":"";
+ if(submitted){button.textContent="Sudah Terkirim";$("public-status").textContent="Jawaban dari browser ini sudah pernah dikirim."; }
  function refresh(){button.disabled=submitting||submitted||answers.size!==questions.length||!check.checked||questions.length===0;progress.textContent=feedback||("Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan"));}
  check.addEventListener("change",refresh);refresh();
  button.addEventListener("click",async()=>{
@@ -42,13 +46,13 @@ async function load(){
    const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload,p_consented:check.checked});
    if(submitError)throw submitError;
    if(result&&typeof result==="object"&&result.success===false)throw Error(result.message||"Jawaban belum diterima.");
-   submitted=true;button.textContent="Jawaban Terkirim";
+   submitted=true;markSubmitted();button.textContent="Jawaban Terkirim";
    feedback="Terima kasih. Jawaban berhasil dikirim.";
    $("public-status").textContent="Jawaban telah dikirim. Anda dapat menutup halaman ini.";
   }catch(e){button.textContent="Coba Kirim Lagi";feedback="Pengiriman gagal. Jawaban belum terkonfirmasi tersimpan. "+(e.message||"Periksa koneksi dan konfigurasi fungsi Supabase.");}
   finally{submitting=false;refresh();}
  });
- $("public-status").textContent="Survei tanpa kode undangan. Isi seluruh pertanyaan dan berikan persetujuan sebelum mengirim.";
+ if(!submitted)$("public-status").textContent="Survei tanpa kode undangan. Isi seluruh pertanyaan dan berikan persetujuan sebelum mengirim.";
 }
 load().catch(e=>{$("public-title").textContent="Survei belum tersedia";$("public-status").textContent=e.message;});
 })();
