@@ -36,6 +36,80 @@ async function renderBilling(orgId){
   if(error){root.append(el("p","Modul tagihan belum tersedia di database atau akses ditolak. Jalankan migrasi Tahap 14 setelah ditinjau: "+(error.code||error.message),"admin-meta"));return;}
   const contracts=contractsResult.data||[],invoices=invoicesResult.data||[],payments=paymentsResult.data||[];
   const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  const verifiedByInvoice=new Map();
+  for(const p of payments){
+    if(p.status==="verified")verifiedByInvoice.set(p.invoice_id,(verifiedByInvoice.get(p.invoice_id)||0)+Number(p.amount_idr));
+  }
+  const activeInvoices=invoices.filter(i=>i.status!=="void");
+  const billed=activeInvoices.reduce((sum,i)=>sum+Number(i.amount_idr),0);
+  const paid=activeInvoices.reduce((sum,i)=>sum+Math.min(Number(i.amount_idr),verifiedByInvoice.get(i.id)||0),0);
+  const outstanding=Math.max(0,billed-paid);
+  const finance=el("section",undefined,"finance-dashboard");
+  finance.append(el("h3","Dashboard Keuangan & Riwayat Pembayaran"));
+  const stats=el("div",undefined,"finance-stats");
+  const moneyFinance=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  for(const [label,value] of [["Total Tagihan",billed],["Sudah Dibayar (Terverifikasi)",paid],["Sisa Piutang",outstanding]]){
+    const card=el("div",undefined,"finance-stat");card.append(el("small",label),el("strong",moneyFinance(value)));stats.append(card);
+  }
+  finance.append(stats);
+  const filters=el("div",undefined,"finance-filters");
+  const search=el("input");search.type="search";search.placeholder="Cari klien atau nomor invoice";search.setAttribute("aria-label","Cari klien atau nomor invoice");
+  const statusFilter=el("select");statusFilter.setAttribute("aria-label","Filter status invoice");
+  for(const [value,label] of [["all","Semua status"],["paid","Lunas"],["unpaid","Belum lunas"],["overdue","Lewat jatuh tempo"]]){
+    const option=el("option",label);option.value=value;statusFilter.append(option);
+  }
+  filters.append(search,statusFilter);finance.append(filters);
+  const invoiceHistory=el("div",undefined,"finance-history");finance.append(invoiceHistory);
+  const monthly=el("div",undefined,"finance-monthly");finance.append(monthly);
+  const renderFinance=()=>{
+    invoiceHistory.replaceChildren();monthly.replaceChildren();
+    const q=search.value.trim().toLocaleLowerCase("id");
+    const today=new Date().toISOString().slice(0,10);
+    const matching=activeInvoices.filter(i=>{
+      const contract=contracts.find(c=>c.id===i.contract_id);
+      const verified=verifiedByInvoice.get(i.id)||0;
+      const isPaid=verified>=Number(i.amount_idr);
+      const isOverdue=!isPaid&&i.due_on<today;
+      const matchStatus=statusFilter.value==="all"||(statusFilter.value==="paid"&&isPaid)||(statusFilter.value==="unpaid"&&!isPaid)||(statusFilter.value==="overdue"&&isOverdue);
+      return matchStatus&&((contract?.client_name||"")+" "+i.invoice_number).toLocaleLowerCase("id").includes(q);
+    });
+    invoiceHistory.append(el("h4","Daftar Invoice ("+matching.length+")"));
+    if(!matching.length)invoiceHistory.append(el("p","Tidak ada invoice yang cocok.","admin-meta"));
+    for(const i of matching){
+      const contract=contracts.find(c=>c.id===i.contract_id);
+      const verified=verifiedByInvoice.get(i.id)||0;
+      const label=verified>=Number(i.amount_idr)?"Lunas":i.due_on<today?"Terlambat":"Belum lunas";
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",i.invoice_number+" — "+(contract?.client_name||"Klien")));
+      row.append(el("span",moneyFinance(i.amount_idr)+" • Terbayar "+moneyFinance(verified)+" • "+label+" • Jatuh tempo "+i.due_on));
+      invoiceHistory.append(row);
+    }
+    monthly.append(el("h4","Pemasukan Bulanan (Pembayaran Terverifikasi)"));
+    const grouped=new Map();
+    for(const p of payments.filter(p=>p.status==="verified")){
+      const month=String(p.paid_on||"").slice(0,7);
+      if(/^\\d{4}-\\d{2}$/.test(month))grouped.set(month,(grouped.get(month)||0)+Number(p.amount_idr));
+    }
+    if(!grouped.size)monthly.append(el("p","Belum ada pembayaran terverifikasi.","admin-meta"));
+    for(const [month,total] of [...grouped].sort((a,b)=>b[0].localeCompare(a[0]))){
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",month),el("span",moneyFinance(total)));monthly.append(row);
+    }
+    const payHistory=el("div",undefined,"finance-payment-history");
+    payHistory.append(el("h4","Riwayat Pembayaran"));
+    for(const p of [...payments].sort((a,b)=>String(b.paid_on).localeCompare(String(a.paid_on)))){
+      const inv=invoices.find(i=>i.id===p.invoice_id);
+      const row=el("div",undefined,"finance-history-row");
+      row.append(el("strong",(inv?.invoice_number||"Invoice")+" — "+p.paid_on));
+      row.append(el("span",moneyFinance(p.amount_idr)+" • "+p.status+" • "+p.transfer_reference));
+      payHistory.append(row);
+    }
+    monthly.append(payHistory);
+  };
+  search.addEventListener("input",renderFinance);
+  statusFilter.addEventListener("change",renderFinance);
+  renderFinance();
+  root.append(finance);
   const title=(t)=>root.append(el("h3",t));
   const form=(fields,buttonLabel,onSubmit)=>{
     const f=el("form",undefined,"billing-form");const inputs={};
