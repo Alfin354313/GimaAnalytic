@@ -15,9 +15,9 @@ async function loadSurveys(){
   $("stat-draft").textContent=surveys.filter(s=>s.status==="draft").length;
   $("stat-published").textContent=surveys.filter(s=>s.status==="published").length;
   $("org-role").textContent="Peran: "+role();
-  document.dispatchEvent(new Event("gima:surveys-loaded"));
   $("create-panel").hidden=!canEdit();
   renderSurveys();
+  document.dispatchEvent(new Event("gima:surveys-loaded"));
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
   await renderBilling(orgId);
