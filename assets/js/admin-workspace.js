@@ -60,6 +60,26 @@ async function openReport(s){
   heading.append(el("strong",ready.length+" dari "+data.length+" pertanyaan memiliki hasil yang dapat ditampilkan"));
   heading.append(el("p","Nilai hanya ditampilkan jika sedikitnya 5 respons valid tersedia pada pertanyaan tersebut. Angka 0 pada pertanyaan lain berarti hasil disembunyikan, bukan berarti tidak ada respons.","admin-meta"));
   root.append(heading);
+  const executive=el("section",undefined,"executive-summary");
+  executive.append(el("h3","Ringkasan Eksekutif"));
+  const kpis=el("div",undefined,"executive-kpis");
+  function metric(label,value,detail){
+    const card=el("div",undefined,"executive-kpi");
+    card.append(el("span",label),el("strong",value),el("small",detail));
+    kpis.append(card);
+  }
+  const scores=ready.map(q=>Number(q.average_score));
+  const overallScore=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;
+  const responseCounts=ready.map(q=>Number(q.response_count));
+  const consistentCount=responseCounts.length>0&&responseCounts.every(c=>c===responseCounts[0]);
+  metric("Skor agregat",overallScore===null?"Tertutup":overallScore.toFixed(2)+" / 5","Rata-rata pertanyaan yang memenuhi ambang privasi");
+  metric("Cakupan pertanyaan",ready.length+" / "+data.length,"Memenuhi minimum 5 respons per pertanyaan");
+  metric("Respons per pertanyaan",consistentCount?String(responseCounts[0]):"Beragam","Bukan jumlah responden unik lintas pertanyaan");
+  const lowQuestions=ready.filter(q=>Number(q.average_score)<3);
+  metric("Area perlu ditinjau",ready.length?String(lowQuestions.length):"—","Pertanyaan dengan skor di bawah 3/5");
+  executive.append(kpis);
+  executive.append(el("p","Indikator bersifat deskriptif, bukan ukuran representativitas atau diagnosis organisasi. Tren waktu belum tersedia karena belum ada pembandingan survei antarperiode.","admin-meta"));
+  root.append(executive);
   if(ready.length){
     const overall=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
     const card=el("div",undefined,"report-score");
