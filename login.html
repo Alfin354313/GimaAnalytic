@@ -1,1 +1,42 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Login Admin | GIMA Analytics</title><link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css"></head><body><header class="top"><a class="brand" href="/"><img class="brand-logo" src="/assets/giandra-maheswara-logo.svg" alt="Logo Giandra Maheswara"><span><strong>GIMA <em>Analytics</em></strong><small>BY GIANDRA MAHESWARA</small></span></a><a class="btn small" href="/">← Beranda</a></header><main class="section auth-page"><div class="auth-shell"><p class="eyebrow">PORTAL PERUSAHAAN</p><h1>Login Admin</h1><p class="lead">Masuk menggunakan akun Supabase Auth yang telah disiapkan pengelola.</p><form id="login-form" class="auth-card"><label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" required maxlength="254"><label for="login-password">Password</label><input id="login-password" type="password" autocomplete="current-password" required minlength="8"><button class="btn" id="login-submit" type="submit">Masuk</button><p id="login-status" role="status" aria-live="polite" class="auth-note"></p></form><p class="auth-note">Pendaftaran mandiri belum tersedia. Jangan membagikan password atau secret key.</p></div></main><footer><strong>GIMA Analytics</strong><span>Portal Admin</span></footer><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js" defer></script><script src="/assets/js/supabase-config.js" defer></script><script src="/assets/js/auth-client.js" defer></script><script src="/assets/js/login.js" defer></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Masuk | GIMA Analytics</title>
+<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css">
+</head>
+<body class="gima-login-body">
+<main class="gima-login-page">
+  <div class="gima-login-decoration gima-login-decoration-left" aria-hidden="true"></div>
+  <div class="gima-login-decoration gima-login-decoration-right" aria-hidden="true"></div>
+  <section class="gima-login-card" aria-labelledby="login-title">
+    <a class="gima-login-brand" href="/" aria-label="GIMA Analytics - Beranda">
+      <img src="/assets/giandra-maheswara-logo.svg" alt="Logo Giandra Maheswara">
+      <span><strong>GIANDRA<br>MAHESWARA</strong><small>GIMA Analytics</small></span>
+    </a>
+    <h1 id="login-title">Masuk ke GIMA Analytics</h1>
+    <p class="gima-login-subtitle">Akses dashboard survei dan analisis perusahaan Anda.</p>
+    <form id="login-form" class="gima-login-form">
+      <label for="login-email">Email Perusahaan</label>
+      <input id="login-email" name="email" type="email" autocomplete="username" placeholder="nama@perusahaan.com" required maxlength="254">
+      <label for="login-password">Password</label>
+      <div class="gima-password-field">
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required minlength="8">
+        <button id="toggle-password" type="button" aria-label="Tampilkan password" aria-pressed="false">Lihat</button>
+      </div>
+      <div class="gima-login-options"><label class="gima-remember-label"><input type="checkbox" id="remember-login" checked> Ingat saya</label><span class="gima-login-help">Lupa password? <a href="mailto:halo@giandramaheswara.com?subject=Bantuan%20Akses%20GIMA%20Analytics">Hubungi pengelola</a></span></div>
+      <button class="gima-login-submit" id="login-submit" type="submit">Masuk</button>
+      <p id="login-status" role="status" aria-live="polite" class="auth-note"></p>
+    </form>
+    <div class="gima-login-divider"><span>atau masuk dengan</span></div>
+    <div class="gima-social-logins"><button type="button" disabled title="Login Google belum dikonfigurasi"><span class="gima-google-letter">G</span> Google</button><button type="button" disabled title="Login Microsoft belum dikonfigurasi"><span class="gima-ms-icon">▦</span> Microsoft</button></div>
+    <p class="gima-login-caption">Google dan Microsoft belum tersedia.</p>
+    <p class="gima-login-contact">Belum punya akun? <a href="/#kontak">Hubungi Kami</a></p>
+  </section>
+  <a class="gima-login-back" href="/">← Kembali ke Beranda</a>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js" defer></script>
+<script src="/assets/js/supabase-config.js" defer></script>
+<script src="/assets/js/auth-client.js" defer></script>
+<script src="/assets/js/login.js" defer></script>
+</body></html>
