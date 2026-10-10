@@ -27,7 +27,7 @@ async function renderBilling(orgId){
   root.replaceChildren(el("p","Memuat kontrak dan tagihan...","admin-meta"));
   const [contractsResult,invoicesResult,paymentsResult]=await Promise.all([
     client.from("client_contracts").select("id,client_name,reference,amount_idr,starts_on,ends_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
-    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,due_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,due_on,status,payment_method,payment_instructions").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
     client.from("client_payments").select("id,invoice_id,amount_idr,paid_on,transfer_reference,status").eq("organization_id",orgId).limit(500)
   ]);
   if($("org-select").value!==orgId)return;
@@ -59,16 +59,27 @@ async function renderBilling(orgId){
   title("Kontrak Klien");
   for(const c of contracts){root.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status,"billing-record"));}
   form([["client_name","Nama klien","text"],["reference","Nomor kontrak","text"],["amount_idr","Nilai kontrak (Rp)","number"],["starts_on","Mulai kontrak","date"]],
-    "Simpan Kontrak",v=>client.from("client_contracts").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
-  title("Invoice");
+    "Simpan Kontrak + Invoice Otomatis",v=>client.from("client_contracts").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
+  title("Invoice Otomatis — Jatuh Tempo 5 Hari");
+  root.append(el("p","Invoice otomatis dibuat saat kontrak disimpan. QRIS dan Virtual Account belum aktif sampai payment gateway terintegrasi.","admin-meta"));
   for(const i of invoices){
     const verified=payments.filter(p=>p.invoice_id===i.id&&p.status==="verified").reduce((sum,p)=>sum+Number(p.amount_idr),0);
-    root.append(el("p",i.invoice_number+" • "+money(i.amount_idr)+" • Terverifikasi "+money(verified)+" • "+i.status,"billing-record"));
+    const item=el("div",undefined,"billing-record");
+    item.append(el("p",i.invoice_number+" • "+money(i.amount_idr)+" • Jatuh tempo "+i.due_on+" • Terverifikasi "+money(verified)+" • "+i.status));
+    const method=el("select");
+    for(const [value,label] of [["bank_transfer","Transfer bank manual"],["qris","QRIS (belum aktif)"],["virtual_account","Virtual Account (belum aktif)"]]){
+      const opt=el("option",label);opt.value=value;method.append(opt);
+    }
+    method.value=i.payment_method||"bank_transfer";
+    const note=el("input");note.type="text";note.maxLength=300;note.placeholder="Instruksi pembayaran / rekening bisnis";note.value=i.payment_instructions||"";
+    const save=action("Simpan metode pembayaran",async()=>{
+      if(method.value!=="bank_transfer"&&!window.confirm("QRIS/VA belum terintegrasi; metode ini belum bisa menerima pembayaran. Lanjutkan?"))return;
+      const {error}=await client.from("client_invoices").update({payment_method:method.value,payment_instructions:note.value.trim()}).eq("id",i.id).eq("organization_id",orgId);
+      if(error){say("Gagal menyimpan metode: "+(error.code||error.message));return;}
+      await renderBilling(orgId);
+    });
+    item.append(method,note,save);root.append(item);
   }
-  if(contracts.length)form([
-    ["contract_id","Kontrak","select",contracts.map(c=>[c.id,c.reference+" — "+c.client_name])],
-    ["invoice_number","Nomor invoice","text"],["amount_idr","Nilai tagihan (Rp)","number"],["issued_on","Tanggal terbit","date"],["due_on","Jatuh tempo","date"]
-  ],"Simpan Invoice",v=>client.from("client_invoices").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
   title("Pembayaran Transfer Manual");
   for(const p of payments){
     const invoice=invoices.find(i=>i.id===p.invoice_id);
