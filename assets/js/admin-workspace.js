@@ -112,7 +112,7 @@ async function renderBilling(orgId){
     item.append(action("Kirim via WhatsApp",()=>{
       const number=window.prompt("Nomor WhatsApp klien (contoh: 6281234567890). PDF dikirim sebagai lampiran secara manual:");
       if(number===null)return;
-      const normalized=number.replace(/[\\s()+-]/g,"").replace(/^0/,"62");
+      const normalized=number.replace(/[^0-9]/g,"").replace(/^0/,"62");
       if(!/^62[0-9]{8,13}$/.test(normalized)){say("Nomor WhatsApp tidak valid.");return;}
       const label=verified>=Number(i.amount_idr)?"Bukti pembayaran lunas":"Invoice tagihan";
       const msg=label+" GIMA Analytics "+i.invoice_number+" untuk "+(contract?.client_name||"klien")+". Nilai: "+money(i.amount_idr)+". Jatuh tempo: "+i.due_on+". Dokumen PDF akan kami kirim sebagai lampiran.";
