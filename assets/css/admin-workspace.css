@@ -109,3 +109,29 @@
 #billing-panel .finance-filters input{min-width:0;padding:11px 12px}
 #billing-panel .finance-filters select{padding:11px 12px}
 @media(max-width:700px){#billing-panel .finance-stats{grid-template-columns:1fr}#billing-panel .finance-filters{grid-template-columns:1fr}}
+
+
+/* Sidebar-based admin navigation */
+.admin-workspace{padding:28px max(20px,calc((100vw - 1320px)/2))}
+.gima-admin-shell{display:grid;grid-template-columns:230px minmax(0,1fr);align-items:start;gap:22px;margin-top:20px}
+.gima-admin-sidebar{position:sticky;top:18px;background:#fff;border:1px solid #d7e9ec;border-radius:16px;padding:18px 12px}
+.gima-sidebar-brand{font-size:18px;font-weight:800;color:#155887;padding:10px 12px 18px;border-bottom:1px solid #e4eff3;margin-bottom:12px}
+.gima-sidebar-links{display:grid;gap:6px}
+.gima-sidebar-link{display:block;width:100%;border:0;background:transparent;border-radius:10px;padding:13px 14px;text-align:left;font:600 14px/1.4 inherit;color:#24485e;cursor:pointer}
+.gima-sidebar-link:hover{background:#eef7fc}
+.gima-sidebar-link.is-active{background:#e5f3fc;color:#125a91;box-shadow:inset 3px 0 #1775b3}
+.gima-admin-main{min-width:0;display:grid;gap:18px}
+.gima-admin-view{display:none;min-width:0}
+.gima-admin-view.gima-view-active{display:grid;align-content:start;gap:18px}
+.gima-view-heading{font-size:24px;margin:0;color:#143c53}
+.gima-mobile-label,.gima-mobile-nav{display:none}
+.gima-admin-view .admin-box{width:100%;margin-top:0!important}
+.gima-admin-view .admin-box[hidden]{display:none!important}
+@media(max-width:850px){
+ .gima-admin-shell{grid-template-columns:1fr;gap:14px}
+ .gima-admin-sidebar{position:static;padding:12px 14px}
+ .gima-sidebar-brand{padding:5px 0 10px}
+ .gima-sidebar-links{display:none}
+ .gima-mobile-label{display:block;font-size:12px;font-weight:700;margin:8px 0 5px}
+ .gima-mobile-nav{display:block;width:100%;padding:12px;border:1px solid #b8d6dd;border-radius:9px;background:white;font:inherit}
+}
