@@ -100,3 +100,12 @@
 .finance-history-row strong{overflow-wrap:anywhere}
 .finance-history-row span{color:#506d7c;font-size:13px;overflow-wrap:anywhere}
 @media(max-width:700px){.finance-stats{grid-template-columns:1fr}.finance-filters{grid-template-columns:1fr}}
+
+/* Full-width billing workspace (outside the sidebar grid) */
+#billing-panel{margin-top:22px;width:100%;min-width:0}
+#billing-content{min-width:0}
+#billing-panel .finance-dashboard{width:100%;min-width:0}
+#billing-panel .finance-stat strong{overflow-wrap:normal;word-break:normal;font-variant-numeric:tabular-nums}
+#billing-panel .finance-filters input{min-width:0;padding:11px 12px}
+#billing-panel .finance-filters select{padding:11px 12px}
+@media(max-width:700px){#billing-panel .finance-stats{grid-template-columns:1fr}#billing-panel .finance-filters{grid-template-columns:1fr}}
