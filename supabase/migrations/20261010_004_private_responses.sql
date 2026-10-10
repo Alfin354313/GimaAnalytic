@@ -33,8 +33,8 @@ begin
  end if;
  return query
  select q.id, q.prompt,
-   case when count(a.score)>=5 then count(a.score) else 0::bigint end,
-   case when count(a.score)>=5 then round(avg(a.score)::numeric,2) else null::numeric end
+   case when count(r.id)>=5 then count(r.id) else 0::bigint end,
+   case when count(r.id)>=5 then round(avg(a.score) filter (where r.id is not null)::numeric,2) else null::numeric end
  from public.survey_questions q
  left join public.survey_answers a on a.question_id=q.id
  left join public.survey_responses r on r.id=a.response_id and r.survey_id=p_survey_id
