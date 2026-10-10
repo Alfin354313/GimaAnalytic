@@ -4,6 +4,16 @@ const form=document.getElementById("login-form");
 const status=document.getElementById("login-status");
 const submit=document.getElementById("login-submit");
 const say=message=>{status.textContent=message;};
+const passwordInput=document.getElementById("login-password");
+const togglePassword=document.getElementById("toggle-password");
+if(togglePassword&&passwordInput)togglePassword.addEventListener("click",()=>{
+  const visible=passwordInput.type==="password";
+  passwordInput.type=visible?"text":"password";
+  togglePassword.textContent=visible?"Sembunyikan":"Lihat";
+  togglePassword.setAttribute("aria-label",visible?"Sembunyikan password":"Tampilkan password");
+  togglePassword.setAttribute("aria-pressed",String(visible));
+});
+
 if(!window.GIMA_AUTH?.configured()){
   say("Konfigurasi Supabase belum tersedia pada deployment ini.");
   submit.disabled=true;
