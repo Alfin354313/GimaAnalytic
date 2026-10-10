@@ -1,6 +1,6 @@
-// Browser-safe public Supabase settings only. Fill with your own project values.
+// Browser-safe public Supabase settings only.
 // NEVER place a service_role key or secret key here.
 window.GIMA_SUPABASE_CONFIG = Object.freeze({
-  url: "",
-  publishableKey: ""
+  url: "https://blhfaxwexvuoldxwsjfq.supabase.co",
+  publishableKey: "" // Paste the sb_publishable_... key from Supabase API Keys
 });
