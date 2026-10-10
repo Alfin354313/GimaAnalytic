@@ -22,7 +22,7 @@ async function loadSurveys(){
 async function loadMembers(orgId){
   const root=$("member-list");if(!root)return;
   root.replaceChildren(el("p","Memuat anggota...","admin-meta"));
-  const {data,error}=await client.from("organization_members").select("user_id,role").eq("organization_id",orgId);
+  const {data,error}=await client.rpc("gima_list_organization_members",{p_organization_id:orgId});
   if($("org-select").value!==orgId)return;
   root.replaceChildren();
   if(error){root.append(el("p","Daftar anggota belum dapat diakses sesuai kebijakan RLS.","admin-meta"));return;}
@@ -42,12 +42,35 @@ async function loadMembers(orgId){
   for(const title of ["Peran","Lihat survei","Kelola survei"]){headRow.append(el("th",title));}
   thead.append(headRow);matrix.append(thead);
   const body=el("tbody");
-  for(const [r,read,write] of [["Pemilik","Ya","Ya"],["Admin","Ya","Ya"],["Anggota","Sesuai RLS","Tidak"]]){
+  for(const [r,read,write] of [["Pemilik","Ya","Ya"],["Admin","Ya","Ya"],["Analis","Sesuai RLS","Tidak"]]){
     const tr=el("tr");for(const value of [r,read,write])tr.append(el("td",value));body.append(tr);
   }
   matrix.append(body);permissions.append(matrix);
   permissions.append(el("p","Ringkasan ini menggambarkan aturan tampilan dashboard. Izin sesungguhnya ditentukan kebijakan RLS dan fungsi Supabase.","admin-meta"));
   root.append(permissions);
+  const currentOrg=orgs.find(o=>o.id===orgId);
+  if(currentOrg?.role==="owner"){
+    const form=el("form",undefined,"member-add-form");
+    form.append(el("h3","Tambah Anggota Terdaftar"));
+    form.append(el("p","Masukkan User ID (UUID) akun yang sudah terdaftar di Supabase Auth. Jangan gunakan email atau service_role key.","admin-meta"));
+    const uid=el("input");uid.type="text";uid.placeholder="User ID (UUID)";uid.required=true;uid.setAttribute("aria-label","User ID anggota");
+    uid.pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    const roleSelect=el("select");roleSelect.setAttribute("aria-label","Peran anggota");
+    for(const role of ["analyst","admin"]){const option=el("option",role);option.value=role;roleSelect.append(option);}
+    const submit=el("button","Tambah Anggota");submit.type="submit";
+    const feedback=el("p",undefined,"admin-meta");feedback.setAttribute("role","status");
+    form.append(uid,roleSelect,submit,feedback);
+    form.addEventListener("submit",async e=>{
+      e.preventDefault();submit.disabled=true;feedback.textContent="Memproses...";
+      const {error:addError}=await client.rpc("gima_add_organization_member",{
+        p_organization_id:orgId,p_user_id:uid.value.trim(),p_role:roleSelect.value
+      });
+      if(addError){feedback.textContent="Gagal menambah anggota: "+(addError.message||addError.code);submit.disabled=false;return;}
+      feedback.textContent="Anggota berhasil ditambahkan.";submit.disabled=false;
+      await loadMembers(orgId);
+    });
+    root.append(form);
+  }
   if(canEdit()){
     const exportButton=action("Unduh Ringkasan Tim (CSV)",()=>{
       const cell=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
