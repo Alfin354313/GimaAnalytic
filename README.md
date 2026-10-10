@@ -16,3 +16,6 @@ Import repository and deploy branch `preview/gima-website-v1` as a preview. No b
 - Brand and domain clearance is pending.
 
 No merge to main has been made.
+## Deployment trigger
+
+Preview deployment refresh requested on 2026-10-10. This is a documentation-only change on the preview branch; production/main is unchanged.
