@@ -19,6 +19,76 @@ async function loadSurveys(){
   renderSurveys();
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
+  await renderBilling(orgId);
+}
+async function renderBilling(orgId){
+  const panel=$("billing-panel"),root=$("billing-content");if(!panel||!root)return;
+  panel.hidden=!canEdit();if(panel.hidden)return;
+  root.replaceChildren(el("p","Memuat kontrak dan tagihan...","admin-meta"));
+  const [contractsResult,invoicesResult,paymentsResult]=await Promise.all([
+    client.from("client_contracts").select("id,client_name,reference,amount_idr,starts_on,ends_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_invoices").select("id,contract_id,invoice_number,amount_idr,due_on,status").eq("organization_id",orgId).order("created_at",{ascending:false}).limit(100),
+    client.from("client_payments").select("id,invoice_id,amount_idr,paid_on,transfer_reference,status").eq("organization_id",orgId).limit(500)
+  ]);
+  if($("org-select").value!==orgId)return;
+  root.replaceChildren();
+  const error=contractsResult.error||invoicesResult.error||paymentsResult.error;
+  if(error){root.append(el("p","Modul tagihan belum tersedia di database atau akses ditolak. Jalankan migrasi Tahap 14 setelah ditinjau: "+(error.code||error.message),"admin-meta"));return;}
+  const contracts=contractsResult.data||[],invoices=invoicesResult.data||[],payments=paymentsResult.data||[];
+  const money=n=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(n)||0);
+  const title=(t)=>root.append(el("h3",t));
+  const form=(fields,buttonLabel,onSubmit)=>{
+    const f=el("form",undefined,"billing-form");const inputs={};
+    for(const [key,label,type,options] of fields){
+      const wrap=el("label",label);const input=el(type==="select"?"select":"input");
+      if(type==="select"){for(const [value,text] of options||[]){const o=el("option",text);o.value=value;input.append(o);}}
+      else input.type=type;
+      input.required=true;if(type==="number"){input.min="1";input.step="1";}
+      wrap.append(input);f.append(wrap);inputs[key]=input;
+    }
+    const button=el("button",buttonLabel);button.type="submit";f.append(button);
+    const notice=el("p",undefined,"admin-meta");notice.setAttribute("role","status");f.append(notice);
+    f.addEventListener("submit",async e=>{
+      e.preventDefault();button.disabled=true;notice.textContent="Menyimpan...";
+      try{const result=await onSubmit(Object.fromEntries(Object.entries(inputs).map(([k,v])=>[k,v.value])));
+        if(result.error){notice.textContent="Gagal menyimpan: "+(result.error.code||result.error.message);return;}
+        await renderBilling(orgId);
+      }finally{button.disabled=false;}
+    });root.append(f);
+  };
+  title("Kontrak Klien");
+  for(const c of contracts){root.append(el("p",c.reference+" — "+c.client_name+" • "+money(c.amount_idr)+" • "+c.status,"billing-record"));}
+  form([["client_name","Nama klien","text"],["reference","Nomor kontrak","text"],["amount_idr","Nilai kontrak (Rp)","number"],["starts_on","Mulai kontrak","date"]],
+    "Simpan Kontrak",v=>client.from("client_contracts").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
+  title("Invoice");
+  for(const i of invoices){
+    const verified=payments.filter(p=>p.invoice_id===i.id&&p.status==="verified").reduce((sum,p)=>sum+Number(p.amount_idr),0);
+    root.append(el("p",i.invoice_number+" • "+money(i.amount_idr)+" • Terverifikasi "+money(verified)+" • "+i.status,"billing-record"));
+  }
+  if(contracts.length)form([
+    ["contract_id","Kontrak","select",contracts.map(c=>[c.id,c.reference+" — "+c.client_name])],
+    ["invoice_number","Nomor invoice","text"],["amount_idr","Nilai tagihan (Rp)","number"],["issued_on","Tanggal terbit","date"],["due_on","Jatuh tempo","date"]
+  ],"Simpan Invoice",v=>client.from("client_invoices").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr)}));
+  title("Pembayaran Transfer Manual");
+  for(const p of payments){
+    const invoice=invoices.find(i=>i.id===p.invoice_id);
+    const row=el("div",undefined,"billing-record");
+    row.append(el("span",(invoice?.invoice_number||"Invoice")+" • "+money(p.amount_idr)+" • "+p.status+" • "+p.transfer_reference));
+    if(role()==="owner"&&p.status==="pending"){
+      const confirm=action("Verifikasi",async()=>{
+        if(!window.confirm("Pastikan dana benar-benar sudah diterima di rekening sebelum verifikasi."))return;
+        const {error}=await client.from("client_payments").update({status:"verified"}).eq("id",p.id).eq("organization_id",orgId);
+        if(error){say("Gagal verifikasi pembayaran: "+(error.code||error.message));return;}
+        await renderBilling(orgId);
+      });row.append(confirm);
+    }
+    root.append(row);
+  }
+  if(invoices.length)form([
+    ["invoice_id","Invoice","select",invoices.filter(i=>i.status!=="void").map(i=>[i.id,i.invoice_number])],
+    ["amount_idr","Jumlah transfer (Rp)","number"],["paid_on","Tanggal transfer","date"],["transfer_reference","Referensi transfer","text"]
+  ],"Catat Pembayaran (Menunggu Verifikasi)",v=>client.from("client_payments").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr),status:"pending"}));
+  root.append(el("p","Pencatatan ini tidak memindahkan dana, tidak mengirim invoice otomatis, dan tidak membuktikan pembayaran sebelum diverifikasi pemilik.","admin-meta"));
 }
 function renderCommercialReadiness(orgId){
   const root=$("commercial-content");if(!root)return;
