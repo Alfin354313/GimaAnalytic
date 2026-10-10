@@ -48,16 +48,21 @@ const setup=()=>{
     const value=document.createElement("strong");value.textContent="—";
     const hint=document.createElement("small");hint.textContent=note;
     card.append(caption,value,hint);kpis.append(card);
-    if(id){
-      const source=document.getElementById(id);
-      if(source){const update=()=>{value.textContent=source.textContent||"0";};update();new MutationObserver(update).observe(source,{childList:true,characterData:true,subtree:true});}
-    }else{
-      const source=document.getElementById("org-role");
-      const update=()=>{value.textContent=(source?.textContent||"—").replace(/^Peran:\\s*/i,"")||"—";};
-      if(source)new MutationObserver(update).observe(source,{childList:true,characterData:true,subtree:true});
-      update();
-    }
+    card.dataset.statSource=id||"org-role";
   }
+  const refreshKpis=()=>{
+    for(const card of kpis.children){
+      const source=document.getElementById(card.dataset.statSource);
+      const raw=source?.textContent?.trim()||"";
+      const value=card.querySelector("strong");
+      if(!value)continue;
+      value.textContent=card.dataset.statSource==="org-role"?(raw.replace(/^Peran:\s*/i,"")||"—"):(raw||"0");
+    }
+  };
+  document.addEventListener("gima:surveys-loaded",refreshKpis);
+  const orgSelector=document.getElementById("org-select");
+  if(orgSelector)orgSelector.addEventListener("change",()=>requestAnimationFrame(refreshKpis));
+  refreshKpis();
   overview.insertBefore(kpis,org);
   const dashboardGrid=document.createElement("div");dashboardGrid.className="gima-overview-grid";
   overview.append(dashboardGrid);dashboardGrid.append(org,readiness);
