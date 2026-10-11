@@ -1,0 +1,40 @@
+(()=>{"use strict";
+const init=()=>{
+ const view=document.querySelector('[data-view="employees"]');if(!view)return;
+ const box=document.createElement("section");box.className="admin-box gima-feature-panel";view.append(box);
+ const note=(text)=>{const p=document.createElement("p");p.className="admin-meta";p.textContent=text;return p};
+ box.append(note("Data karyawan hanya dapat diakses owner/admin organisasi. Tidak terhubung ke identitas responden survei."));
+ const status=document.createElement("p");status.className="admin-message";status.setAttribute("role","status");box.append(status);
+ const make=(tag,txt)=>{const n=document.createElement(tag);if(txt!==undefined)n.textContent=txt;return n};
+ const form=make("form");form.className="gima-hr-form";
+ const department=make("select");department.required=false;department.setAttribute("aria-label","Divisi");
+ const code=make("input");code.required=true;code.maxLength=60;code.placeholder="Kode karyawan";
+ const name=make("input");name.required=true;name.maxLength=160;name.minLength=2;name.placeholder="Nama lengkap";
+ const title=make("input");title.maxLength=160;title.placeholder="Jabatan";
+ const hired=make("input");hired.type="date";hired.required=true;hired.setAttribute("aria-label","Tanggal masuk");
+ const employment=make("select");for(const [v,t] of [["active","Aktif"],["on_leave","Cuti"],["exited","Keluar"]]){const o=make("option",t);o.value=v;employment.append(o)}
+ const exited=make("input");exited.type="date";exited.hidden=true;exited.setAttribute("aria-label","Tanggal keluar");
+ employment.addEventListener("change",()=>{exited.hidden=employment.value!=="exited";exited.required=!exited.hidden;if(exited.hidden)exited.value=""});
+ const submit=make("button","Tambah karyawan");submit.type="submit";submit.className="btn";
+ const cancel=make("button","Batal edit");cancel.type="button";cancel.className="btn outline";cancel.hidden=true;
+ const addField=(label,control)=>{const wrap=make("label");wrap.textContent=label;wrap.append(control);form.append(wrap)};
+ addField("Kode karyawan",code);addField("Nama lengkap",name);addField("Jabatan",title);addField("Divisi",department);addField("Tanggal masuk",hired);addField("Status",employment);addField("Tanggal keluar (jika keluar)",exited);form.append(submit,cancel);
+ const deptForm=make("form");const deptName=make("input");deptName.placeholder="Nama divisi baru";deptName.maxLength=120;deptName.minLength=2;deptName.required=true;const deptSubmit=make("button","Tambah divisi");deptSubmit.type="submit";deptSubmit.className="btn outline";deptForm.append(deptName,deptSubmit);
+ const search=make("input");search.type="search";search.placeholder="Cari kode, nama, atau jabatan";search.setAttribute("aria-label","Cari karyawan");
+ const filter=make("select");for(const [v,t] of [["","Semua status"],["active","Aktif"],["on_leave","Cuti"],["exited","Keluar"]]){const o=make("option",t);o.value=v;filter.append(o)}
+ const list=make("div");list.className="gima-feature-list";
+ box.append(make("h3","Kelola divisi"),deptForm,make("h3","Data karyawan"),form,search,filter,list);
+ let orgId=null,rows=[],departments=[],editing=null,loadId=0;
+ const client=()=>window.gimaFeatureClient;
+ const msg=t=>{status.textContent=t};
+ const allowed=()=>{const role=document.getElementById("org-role")?.textContent||"";return /owner|admin/i.test(role)};
+ const options=()=>{department.replaceChildren();const empty=make("option","Tanpa divisi");empty.value="";department.append(empty);for(const d of departments){const o=make("option",d.name);o.value=d.id;department.append(o)}};
+ const reset=()=>{editing=null;form.reset();exited.hidden=true;exited.required=false;submit.textContent="Tambah karyawan";cancel.hidden=true};
+ const draw=()=>{list.replaceChildren();const q=search.value.trim().toLowerCase();const filtered=rows.filter(r=>(!filter.value||r.employment_status===filter.value)&&(!q||[r.employee_code,r.full_name,r.job_title].some(v=>(v||"").toLowerCase().includes(q))));list.append(note(filtered.length+" dari "+rows.length+" karyawan ditampilkan"));for(const r of filtered){const item=make("div");item.className="gima-feature-row";const details=make("div");details.className="gima-feature-description";details.append(make("strong",r.full_name+" ("+r.employee_code+")"),note([r.job_title,departments.find(d=>d.id===r.department_id)?.name||"Tanpa divisi",r.employment_status].filter(Boolean).join(" • ")));const edit=make("button","Edit");edit.type="button";edit.className="btn outline";edit.addEventListener("click",()=>{editing=r.id;code.value=r.employee_code;name.value=r.full_name;title.value=r.job_title||"";department.value=r.department_id||"";hired.value=r.hired_on||"";employment.value=r.employment_status;exited.hidden=r.employment_status!=="exited";exited.required=!exited.hidden;exited.value=r.exited_on||"";submit.textContent="Simpan perubahan";cancel.hidden=false;form.scrollIntoView({behavior:"smooth",block:"start"})});item.append(details,edit);list.append(item)}};
+ const load=async(id)=>{const current=++loadId;orgId=id;rows=[];departments=[];reset();options();list.replaceChildren();if(!id||!client())return;if(!allowed()){msg("Akses data karyawan hanya untuk owner/admin.");return}msg("Memuat data karyawan...");try{const [d,e]=await Promise.all([client().from("hr_departments").select("id,name").eq("organization_id",id).order("name").limit(500),client().from("hr_employees").select("id,employee_code,full_name,job_title,department_id,employment_status,hired_on,exited_on").eq("organization_id",id).order("full_name").limit(1000)]);if(current!==loadId)return;if(d.error||e.error)throw d.error||e.error;departments=d.data||[];rows=e.data||[];options();msg(rows.length>=1000?"Menampilkan maksimal 1000 karyawan. Pagination belum tersedia.":"Data karyawan siap.");draw()}catch(err){if(current===loadId)msg("Gagal memuat: "+(err.code||err.message))}};
+ deptForm.addEventListener("submit",async ev=>{ev.preventDefault();if(!orgId||!client()||!allowed())return;deptSubmit.disabled=true;const id=orgId;const {error}=await client().from("hr_departments").insert({organization_id:id,name:deptName.value.trim()});deptSubmit.disabled=false;if(error){msg("Gagal menambah divisi: "+(error.code||error.message));return}deptName.value="";await load(id)});
+ form.addEventListener("submit",async ev=>{ev.preventDefault();if(!orgId||!client()||!allowed())return;if(employment.value==="exited"&&(!exited.value||!hired.value)){msg("Tanggal masuk dan keluar wajib diisi untuk status keluar.");return}const id=orgId;const payload={organization_id:id,employee_code:code.value.trim(),full_name:name.value.trim(),job_title:title.value.trim(),department_id:department.value||null,hired_on:hired.value||null,employment_status:employment.value,exited_on:employment.value==="exited"?exited.value:null};submit.disabled=true;const result=editing?await client().from("hr_employees").update(payload).eq("id",editing).eq("organization_id",id):await client().from("hr_employees").insert(payload);submit.disabled=false;if(result.error){msg("Gagal menyimpan: "+(result.error.code||result.error.message));return}await load(id);msg("Data karyawan tersimpan.")});
+ cancel.addEventListener("click",reset);search.addEventListener("input",draw);filter.addEventListener("change",draw);
+ document.addEventListener("gima:surveys-loaded",ev=>{load(ev.detail?.orgId)});
+};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
