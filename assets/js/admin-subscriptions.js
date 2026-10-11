@@ -17,14 +17,18 @@ const init=()=>{
   if(current!==request)return;
   if(plans.error||subs.error){status.textContent="Data langganan belum tersedia. Jalankan SQL Tahap 18 di Supabase atau periksa hak akses: "+(plans.error?.code||subs.error?.code||"error");return}
   const catalog=plans.data||[],entries=subs.data||[];
-  const active=entries.find(s=>s.status==="active"&&s.starts_on&&s.ends_on&&s.starts_on<=new Date().toLocaleDateString("en-CA")&&s.ends_on>=new Date().toLocaleDateString("en-CA"));
+  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  const active=entries.find(s=>s.status==="active"&&s.approved_at&&s.starts_on&&s.ends_on&&s.starts_on<=today&&s.ends_on>=today);
   const latest=active||entries[0];const labels={pending:"Menunggu verifikasi",active:"Aktif",expired:"Kedaluwarsa",suspended:"Ditangguhkan",cancelled:"Dibatalkan"};
-  status.textContent=latest?"Status tercatat: "+(labels[latest.status]||latest.status)+(active?" — masih dalam masa berlaku":" — belum terkonfirmasi aktif saat ini"):"Belum ada langganan tercatat untuk organisasi ini.";
+  const effectiveStatus=active?"Aktif":latest?.status==="active"?(latest.ends_on&&latest.ends_on<today?"Masa berlaku berakhir":"Belum berlaku"):(labels[latest?.status]||"Belum berlangganan");
+  status.textContent=latest?"Status langganan: "+effectiveStatus+(active?" — diverifikasi dan dalam masa berlaku":" — akses belum dinyatakan aktif oleh panel ini"):"Belum ada langganan tercatat untuk organisasi ini.";
   const add=(heading,value)=>{const card=el("div");card.className="gima-feature-metric";card.append(el("span",heading),el("strong",value));info.append(card)};
-  add("Paket saat ini",catalog.find(p=>p.id===latest?.plan_id)?.name||"Belum ditentukan");
+  add("Status efektif",effectiveStatus);
+  add("Paket tercatat",catalog.find(p=>p.id===latest?.plan_id)?.name||"Belum ditentukan");
   add("Tanggal mulai",latest?.starts_on||"—");
   add("Berlaku sampai",latest?.ends_on||"—");
   add("Paket tersedia",catalog.map(p=>p.name).join(", ")||"—");
+  const warning=el("p","Verifikasi transfer dan aktivasi belum terhubung otomatis. Panel ini hanya membaca status; belum membatasi akses ke fitur berdasarkan langganan.");warning.className="admin-meta";info.append(warning);
  };
  document.addEventListener("gima:surveys-loaded",ev=>draw(ev.detail?.orgId));
 };
