@@ -23,9 +23,14 @@ let client;
 try{client=window.GIMA_AUTH.getClient();}
 catch(error){say(error.message||"Gagal memuat koneksi Supabase.");submit.disabled=true;return;}
 async function redirectForUser(){
+  const {data:{user},error:userError}=await client.auth.getUser();
+  if(userError||!user){say("Sesi login tidak valid. Silakan masuk kembali.");return;}
+  const {data:members,error:memberError}=await client.from("organization_members").select("organization_id").eq("user_id",user.id).limit(1);
+  if(memberError){say("Gagal memeriksa keanggotaan organisasi: "+(memberError.code||memberError.message));return;}
+  if(members?.length){window.location.replace("/admin");return;}
   const {error}=await client.rpc("gima_platform_pending_requests");
   if(!error){window.location.replace("/super-admin.html");return;}
-  if(error.code==="42501"){window.location.replace("/admin");return;}
+  if(error.code==="42501"){say("Akun belum memiliki akses organisasi atau Super Admin. Hubungi pengelola GIMA.");return;}
   say("Tidak dapat memeriksa hak akses akun: "+(error.code||error.message)+". Silakan coba lagi.");
 }
 client.auth.getSession().then(({data,error})=>{
