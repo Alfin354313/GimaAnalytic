@@ -262,3 +262,23 @@ nav.gima-admin-sidebar{position:relative;top:auto;border-radius:0;min-height:660
 .gima-exec-bar-row b{text-align:right;color:#164560}
 @media(max-width:950px){.gima-exec-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:690px){.gima-exec-cards,.gima-visual-grid{grid-template-columns:1fr}.gima-exec-bar-row{grid-template-columns:1fr 60px}.gima-exec-bar-row span{grid-column:1/-1}}
+
+/* Phase 22: installed GIMA desktop window (PWA standalone only). */
+@media (display-mode: standalone) and (min-width: 851px) and (not (prefers-reduced-motion: reduce)) {
+ .gima-admin-shell{transition:box-shadow .2s ease}
+}
+@media (display-mode: standalone) and (min-width: 851px){
+ html,body{min-height:100%;background:#edf5fc}
+ header.top{display:none!important}
+ body>footer{display:none!important}
+ .admin-workspace{padding:16px!important;max-width:none!important;margin:0!important;min-height:100vh;box-sizing:border-box;background:#edf5fc}
+ .admin-heading{background:#fff;border:1px solid #d8e7f1;border-radius:15px;padding:16px 22px;box-shadow:0 4px 14px rgba(16,50,80,.04)}
+ .admin-heading h1{font-size:clamp(23px,2.4vw,31px)}
+ .gima-admin-shell{margin-top:14px;min-height:calc(100vh - 145px);grid-template-columns:230px minmax(0,1fr);border-radius:15px;box-shadow:0 10px 28px rgba(12,55,92,.09)}
+ nav.gima-admin-sidebar{min-height:calc(100vh - 145px);background:linear-gradient(180deg,#103c67,#123d64);padding:22px 12px}
+ nav.gima-admin-sidebar .gima-sidebar-link{border-radius:10px}
+ nav.gima-admin-sidebar .gima-sidebar-link.is-active{background:#2578ce;color:white}
+ .gima-admin-main{padding:24px;background:#edf5fc}
+ .gima-admin-view .admin-box{border-radius:13px;box-shadow:0 4px 14px rgba(13,63,98,.04)}
+}
+@media print{header.top{display:none!important}.gima-admin-shell{box-shadow:none!important}}
