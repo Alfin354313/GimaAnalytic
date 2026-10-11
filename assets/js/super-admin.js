@@ -2,8 +2,18 @@
 const $=id=>document.getElementById(id),status=$("super-status"),list=$("super-list");
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
 let client,loading=false;
+const sections={};let currentTab="overview";
+const tabs=el("nav");tabs.setAttribute("aria-label","Menu Super Admin");tabs.style.display="flex";tabs.style.flexWrap="wrap";tabs.style.gap="8px";tabs.style.margin="20px 0";
+const labels={overview:"Ringkasan",customers:"Pelanggan",requests:"Pengajuan Pembayaran",subscriptions:"Langganan",history:"Riwayat Keputusan"};
+const buttons={};
+function activate(tab){currentTab=labels[tab]?tab:"overview";for(const [key,section] of Object.entries(sections))section.hidden=key!==currentTab;for(const [key,button] of Object.entries(buttons)){button.setAttribute("aria-current",key===currentTab?"page":"false");button.className=key===currentTab?"btn":"btn outline"}if(location.hash!=="#"+currentTab)history.replaceState(null,"","#"+currentTab)}
+for(const [key,label] of Object.entries(labels)){const b=el("button",label);b.type="button";b.className="btn outline";b.addEventListener("click",()=>activate(key));buttons[key]=b;tabs.append(b)}
+const holder=el("div");
+for(const key of Object.keys(labels)){const section=el("section");section.hidden=true;section.setAttribute("aria-label",labels[key]);sections[key]=section;holder.append(section)}
+const root=$("super-list");root.before(tabs);root.after(holder);sections.requests.append(root);
 
-const dashboard=el("section");dashboard.style.marginTop="24px";list.after(dashboard);
+
+const dashboard=sections.overview;dashboard.style.marginTop="24px";
 const makeTable=(title,headers,rows)=>{const section=el("section");section.className="admin-box";section.style.marginTop="18px";section.append(el("h2",title));if(!rows.length){section.append(el("p","Belum ada data."));return section}const wrapper=el("div");wrapper.style.overflowX="auto";const table=el("table");table.style.width="100%";table.style.borderCollapse="collapse";const head=el("thead"),tr=el("tr");headers.forEach(h=>{const th=el("th",h);th.style.textAlign="left";th.style.padding="10px";tr.append(th)});head.append(tr);table.append(head);const body=el("tbody");rows.forEach(row=>{const tr=el("tr");row.forEach(v=>{const td=el("td",v===null||v===undefined?"—":String(v));td.style.padding="10px";td.style.borderTop="1px solid #dce8ed";tr.append(td)});body.append(tr)});table.append(body);wrapper.append(table);section.append(wrapper);return section};
 async function loadDashboard(){
  const {data,error}=await client.rpc("gima_platform_dashboard");
@@ -13,14 +23,14 @@ async function loadDashboard(){
  const title=el("h2","Ringkasan Platform");dashboard.append(title);
  const cards=el("div");cards.style.display="grid";cards.style.gridTemplateColumns="repeat(auto-fit,minmax(170px,1fr))";cards.style.gap="12px";
  [["Total Organisasi",d.organization_count],["Menunggu Verifikasi",d.pending_count],["Langganan Aktif",d.active_count],["Sudah Ditinjau",d.reviewed_count]].forEach(([label,value])=>{const card=el("div");card.className="admin-box";card.append(el("p",label),el("h2",String(value??0)));cards.append(card)});dashboard.append(cards);
- dashboard.append(makeTable("Daftar Pelanggan (maks. 100)",["Organisasi","Paket terakhir","Pengajuan pending"],(d.customers||[]).map(x=>[x.name,x.latest_plan,x.pending_requests])));
- dashboard.append(makeTable("Langganan (100 terbaru)",["Organisasi","Paket","Status","Mulai","Berakhir"],(d.subscriptions||[]).map(x=>[x.organization_name,x.plan_name,x.status,x.starts_on,x.ends_on])));
- dashboard.append(makeTable("Riwayat Keputusan (100 terbaru)",["Organisasi","Paket","Status","Referensi","Tanggal Transfer"],(d.history||[]).map(x=>[x.organization_name,x.plan_name,x.status,x.transfer_reference,x.transfer_date])));
- const foot=el("p","Riwayat ini mencatat status pengajuan, bukan laporan mutasi bank atau bukti penerimaan dana.");foot.className="admin-meta";dashboard.append(foot);
+ sections.customers.replaceChildren(makeTable("Daftar Pelanggan (maks. 100)",["Organisasi","Paket terakhir","Pengajuan pending"],(d.customers||[]).map(x=>[x.name,x.latest_plan,x.pending_requests])));
+ sections.subscriptions.replaceChildren(makeTable("Langganan (100 terbaru)",["Organisasi","Paket","Status","Mulai","Berakhir"],(d.subscriptions||[]).map(x=>[x.organization_name,x.plan_name,x.status,x.starts_on,x.ends_on])));
+ sections.history.replaceChildren(makeTable("Riwayat Keputusan (100 terbaru)",["Organisasi","Paket","Status","Referensi","Tanggal Transfer"],(d.history||[]).map(x=>[x.organization_name,x.plan_name,x.status,x.transfer_reference,x.transfer_date])));
+ const foot=el("p","Riwayat ini mencatat status pengajuan, bukan laporan mutasi bank atau bukti penerimaan dana.");foot.className="admin-meta";sections.history.append(foot);
 }
 
 const refresh=el("button","Muat ulang pengajuan");refresh.type="button";refresh.className="btn outline";refresh.style.marginBottom="12px";
-list.before(refresh);
+sections.requests.prepend(refresh);
 refresh.addEventListener("click",()=>load());
 async function load(){
  if(loading)return;
@@ -61,6 +71,8 @@ async function init(){
  if(error||!user){window.location.replace("/login");return}
  $("super-logout").hidden=false;
  $("super-logout").addEventListener("click",async()=>{await client.auth.signOut();window.location.replace("/login")});
+ activate(location.hash.slice(1));
+ window.addEventListener("hashchange",()=>activate(location.hash.slice(1)));
  await load();
 }
 init().catch(e=>status.textContent="Gagal membuka panel: "+e.message);
