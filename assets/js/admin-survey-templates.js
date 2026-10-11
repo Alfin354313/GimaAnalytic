@@ -13,7 +13,7 @@ const init=()=>{
  const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Pilih template";select.append(placeholder);
  for(const [index,t] of templates.entries()){const o=document.createElement("option");o.value=String(index);o.textContent=t.name;select.append(o)}
  const desc=document.createElement("p");desc.className="admin-meta";
- const button=document.createElement("button");button.type="button";button.className="btn outline";button.textContent="Buat draft dari template";
+ const button=document.createElement("button");button.type="button";button.className="btn";button.textContent="Buat draft dari template";button.style.cssText="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 20px;border:1px solid #39a9b7;border-radius:9px;background:#4eb5bf;color:#ffffff;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(17,89,112,.12)";
  select.addEventListener("change",()=>{desc.textContent=select.value===""?"":templates[Number(select.value)].description});
  wrap.append(heading,note,select,desc,button);form.before(wrap);
  const info=document.createElement("p");info.className="admin-meta";info.setAttribute("role","status");wrap.append(info);
@@ -23,7 +23,7 @@ const init=()=>{
   const role=document.getElementById("org-role")?.textContent||"";
   if(!orgId||!/owner|admin/i.test(role)){info.textContent="Hanya owner/admin dapat membuat survei.";return}
   const t=templates[Number(select.value)];if(!window.confirm("Buat draft "+t.name+" dengan lima pertanyaan?"))return;
-  button.disabled=true;info.textContent="Membuat draft...";
+  button.disabled=true;button.style.opacity="0.65";button.style.cursor="wait";info.textContent="Membuat draft...";
   try{
    const client=window.gimaFeatureClient;const {data:auth,error:authError}=await client.auth.getUser();if(authError||!auth?.user)throw authError||new Error("Sesi berakhir");
    const {data:survey,error:createError}=await client.from("surveys").insert({organization_id:orgId,created_by:auth.user.id,title:t.name+" — "+new Date().toLocaleDateString("id-ID"),description:t.description,status:"draft"}).select("id").single();
@@ -33,7 +33,7 @@ const init=()=>{
    if(questionError){info.textContent="Draft dibuat, tetapi pertanyaan gagal ditambahkan ("+(questionError.code||questionError.message)+"). Buka menu Survei untuk memperbaiki draft.";return}
    info.textContent="Draft template berhasil dibuat. Buka daftar survei untuk meninjau pertanyaan.";
    document.getElementById("org-select")?.dispatchEvent(new Event("change"));
-  }catch(err){info.textContent="Gagal membuat template: "+(err.code||err.message)}finally{button.disabled=false}
+  }catch(err){info.textContent="Gagal membuat template: "+(err.code||err.message)}finally{button.disabled=false;button.style.opacity="1";button.style.cursor="pointer"}
  });
 };
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
