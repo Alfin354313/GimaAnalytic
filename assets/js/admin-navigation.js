@@ -324,7 +324,10 @@ const setup=()=>{
   const orgHeading=org.querySelector("h2");if(orgHeading)orgHeading.textContent="Organisasi & Pengaturan";
   const readyHeading=readiness.querySelector("h2");if(readyHeading)readyHeading.textContent="Ringkasan Operasional";
   const sidebarFoot=document.createElement("div");sidebarFoot.className="gima-sidebar-foot";sidebarFoot.textContent="People Analytics • HR Survey";sidebar.append(sidebarFoot);
-  // Show the original Dashboard Admin header only on the Dashboard view.\n  const dashboardHeading=document.querySelector(".admin-workspace > .admin-heading");\n  if(dashboardHeading)sections.get("overview").prepend(dashboardHeading);\n  const email=panel.querySelector(":scope > .admin-meta");if(email)main.prepend(email);
+  // Show the original Dashboard Admin header only on the Dashboard view.
+  const dashboardHeading=document.querySelector(".admin-workspace > .admin-heading");
+  if(dashboardHeading)sections.get("overview").prepend(dashboardHeading);
+  const email=panel.querySelector(":scope > .admin-meta");if(email)main.prepend(email);
   grid.replaceWith(shell);shell.append(sidebar,main);
   const select=key=>{
     if(!sections.has(key))key="overview";
