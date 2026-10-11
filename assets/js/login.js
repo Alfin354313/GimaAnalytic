@@ -22,9 +22,15 @@ if(!window.GIMA_AUTH?.configured()){
 let client;
 try{client=window.GIMA_AUTH.getClient();}
 catch(error){say(error.message||"Gagal memuat koneksi Supabase.");submit.disabled=true;return;}
+async function redirectForUser(){
+  const {error}=await client.rpc("gima_platform_pending_requests");
+  if(!error){window.location.replace("/super-admin.html");return;}
+  if(error.code==="42501"){window.location.replace("/admin");return;}
+  say("Tidak dapat memeriksa hak akses akun: "+(error.code||error.message)+". Silakan coba lagi.");
+}
 client.auth.getSession().then(({data,error})=>{
   if(error){say("Tidak dapat memeriksa sesi. Muat ulang halaman dan coba lagi.");return;}
-  if(data.session)window.location.replace("/admin");
+  if(data.session)redirectForUser().catch(()=>say("Gagal memeriksa hak akses. Coba muat ulang."));
 }).catch(()=>say("Tidak dapat menghubungi Supabase untuk memeriksa sesi."));
 form.addEventListener("submit",async event=>{
   event.preventDefault();
@@ -45,7 +51,7 @@ form.addEventListener("submit",async event=>{
       return;
     }
     if(!data?.session||!data?.user){say("Login belum menghasilkan sesi. Periksa Authentication Logs.");return;}
-    window.location.replace("/admin");
+    await redirectForUser();
   }catch(error){
     say("Tidak dapat terhubung ke Supabase. Periksa jaringan, URL proyek, dan deployment Preview.");
   }finally{submit.disabled=false;}
