@@ -1,12 +1,21 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id),status=$("super-status"),list=$("super-list");
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
-let client;
+let client,loading=false;
+const refresh=el("button","Muat ulang pengajuan");refresh.type="button";refresh.className="btn outline";refresh.style.marginBottom="12px";
+list.before(refresh);
+refresh.addEventListener("click",()=>load());
 async function load(){
+ if(loading)return;
+ loading=true;refresh.disabled=true;status.textContent="Memuat pengajuan terbaru...";
+ try{await loadPending()}finally{loading=false;refresh.disabled=false}
+}
+async function loadPending(){
  const {data,error}=await client.rpc("gima_platform_pending_requests");
  list.replaceChildren();
  if(error){status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
  status.textContent=(data||[]).length+" pengajuan menunggu verifikasi.";
+ if(!(data||[]).length){const empty=el("p","Belum ada pengajuan. Masuk sebagai admin organisasi untuk mengirim pengajuan uji melalui Kontrak & Tagihan.");empty.className="admin-meta";list.append(empty)}
  for(const r of data||[]){
   const box=el("section");box.className="admin-box";box.style.marginTop="14px";
   box.append(el("h3",r.organization_name+" — "+r.plan_name),el("p","Referensi: "+r.transfer_reference+" | Tanggal transfer: "+r.transfer_date));
@@ -24,7 +33,8 @@ async function load(){
    }catch(err){message.textContent="Gagal: "+err.message;approve.disabled=reject.disabled=false}
   };
   approve.addEventListener("click",()=>review(true));reject.addEventListener("click",()=>review(false));
-  box.append(note,approve,el("span"," "),reject,message);list.append(box);
+  const notice=el("p","Pastikan mutasi rekening bank resmi telah diperiksa sebelum menyetujui. Referensi yang diisi pelanggan bukan bukti pembayaran.");notice.className="admin-meta";
+  box.append(notice,note,approve,el("span"," "),reject,message);list.append(box);
  }
 }
 async function init(){
