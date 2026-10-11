@@ -24,7 +24,10 @@ const init=()=>{
   else {
    const pending=(requests.data||[]).find(r=>r.status==="pending");
    requestBox.append(el("h4","Pengajuan Langganan / Konfirmasi Transfer"));
+   const todayLocal=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+   const currentActive=entries.some(s=>s.status==="active"&&s.approved_at&&s.starts_on<=todayLocal&&s.ends_on>=todayLocal);
    if(pending){requestBox.append(el("p","Pengajuan menunggu pemeriksaan pengelola. Referensi: "+pending.transfer_reference+" • Tanggal: "+pending.transfer_date));}
+   else if(currentActive){requestBox.append(el("p","Langganan masih aktif. Pengajuan perpanjangan atau perubahan paket belum tersedia; hubungi pengelola GIMA."));}
    else {
     const form=el("form");form.className="billing-form";
     const select=el("select");select.required=true;select.setAttribute("aria-label","Pilih paket");
@@ -54,7 +57,7 @@ const init=()=>{
   add("Tanggal mulai",latest?.starts_on||"—");
   add("Berlaku sampai",latest?.ends_on||"—");
   add("Paket tersedia",catalog.map(p=>p.name).join(", ")||"—");
-  const warning=el("p","Verifikasi transfer dan aktivasi belum terhubung otomatis. Panel ini hanya membaca status; belum membatasi akses ke fitur berdasarkan langganan.");warning.className="admin-meta";info.append(warning);
+  const warning=el("p","Pembayaran diverifikasi secara manual oleh pengelola. Status ini belum membatasi akses ke fitur berdasarkan langganan.");warning.className="admin-meta";info.append(warning);
  };
  document.addEventListener("gima:surveys-loaded",ev=>draw(ev.detail?.orgId));
 };
