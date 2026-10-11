@@ -25,6 +25,7 @@ const setup=()=>{
     ["reports","Laporan","file-chart-column",[]],
     ["settings","Pengaturan","settings",[]],
     ["team","Tim Organisasi","users",[team]],
+    ["employees","Database Karyawan","users-round",[]],
     ["billing","Kontrak & Tagihan","receipt",[billing]]
   ];
   const sections=new Map(),buttons=new Map();
