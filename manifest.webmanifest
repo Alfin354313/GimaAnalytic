@@ -1,0 +1,19 @@
+{
+  "name": "GIMA Analytics — Portal Organisasi",
+  "short_name": "GIMA Analytics",
+  "description": "Portal organisasi untuk survei dan analisis SDM",
+  "lang": "id",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#123c70",
+  "icons": [
+    {
+      "src": "/assets/giandra-maheswara-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
