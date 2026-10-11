@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>Masuk | GIMA Analytics</title>
 <link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css">
-</head>
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#123c70"></head>
 <body class="gima-login-body">
 <main class="gima-login-page">
   <div class="gima-login-decoration gima-login-decoration-left" aria-hidden="true"></div>
@@ -30,7 +30,7 @@
     </form>
     <div class="gima-login-divider"><span>atau masuk dengan</span></div>
     <div class="gima-social-logins"><button type="button" disabled title="Login Google belum dikonfigurasi"><span class="gima-google-letter">G</span> Google</button><button type="button" disabled title="Login Microsoft belum dikonfigurasi"><span class="gima-ms-icon">▦</span> Microsoft</button></div>
-    <p class="gima-login-caption">Google dan Microsoft belum tersedia.</p>
+    <button id="gima-install" class="gima-login-submit" type="button" hidden>Instal GIMA Analytics</button><p class="gima-login-caption">Google dan Microsoft belum tersedia.</p>
     <p class="gima-login-contact">Belum punya akun? <a href="/#kontak">Hubungi Kami</a></p>
   </section>
   <a class="gima-login-back" href="/">← Kembali ke Beranda</a>
@@ -39,4 +39,4 @@
 <script src="/assets/js/supabase-config.js" defer></script>
 <script src="/assets/js/auth-client.js" defer></script>
 <script src="/assets/js/login.js" defer></script>
-</body></html>
+<script src="/assets/js/install-app.js" defer></script></body></html>
