@@ -1,0 +1,36 @@
+(()=>{"use strict";
+const init=()=>{
+ const view=document.querySelector('[data-view="reports"]');if(!view)return;
+ const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
+ const panel=el("section");panel.className="admin-box gima-feature-panel";
+ panel.append(el("h3","Action Plan HR"),el("p","Catat tindak lanjut hasil survei dengan PIC, prioritas, tenggat, dan status. Rencana tindakan ini tidak mengungkap identitas responden."));
+ const status=el("p");status.className="admin-meta";status.setAttribute("role","status");panel.append(status);
+ const form=el("form");form.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:14px 0";
+ const field=(label,node)=>{const wrap=el("label",label);wrap.append(node);form.append(wrap)};
+ const title=el("input");title.required=true;title.maxLength=160;title.minLength=3;title.placeholder="Contoh: Tingkatkan komunikasi internal";field("Program perbaikan",title);
+ const owner=el("input");owner.maxLength=160;owner.placeholder="PIC / penanggung jawab";field("Penanggung jawab",owner);
+ const due=el("input");due.type="date";field("Target selesai",due);
+ const survey=el("select");field("Survei terkait (opsional)",survey);
+ const priority=el("select");for(const [v,t] of [["low","Rendah"],["medium","Sedang"],["high","Tinggi"]]){const o=el("option",t);o.value=v;priority.append(o)}field("Prioritas",priority);
+ const progress=el("select");for(const [v,t] of [["planned","Direncanakan"],["in_progress","Berjalan"],["completed","Selesai"],["cancelled","Dibatalkan"]]){const o=el("option",t);o.value=v;progress.append(o)}field("Status",progress);
+ const description=el("textarea");description.maxLength=3000;description.rows=3;description.placeholder="Langkah konkret dan indikator keberhasilan";field("Rincian tindakan",description);
+ const save=el("button","Tambah action plan");save.type="submit";save.className="btn";save.style.cssText="background:#4eb5bf;color:white;padding:12px 18px;border-radius:9px;font-weight:700;cursor:pointer";
+ const cancel=el("button","Batal edit");cancel.type="button";cancel.className="btn outline";cancel.hidden=true;cancel.style.display="none";
+ form.append(save,cancel);panel.append(form);
+ const list=el("div");list.className="gima-feature-list";panel.append(list);view.append(panel);
+ let orgId=null,rows=[],editing=null,request=0;
+ const client=()=>window.gimaFeatureClient;
+ const reset=()=>{editing=null;form.reset();save.textContent="Tambah action plan";cancel.hidden=true;cancel.style.display="none"};
+ cancel.addEventListener("click",reset);
+ const labels={planned:"Direncanakan",in_progress:"Berjalan",completed:"Selesai",cancelled:"Dibatalkan",low:"Rendah",medium:"Sedang",high:"Tinggi"};
+ const render=()=>{list.replaceChildren();const summary=el("p",rows.length+" action plan • "+rows.filter(r=>r.status==="completed").length+" selesai");summary.className="admin-meta";list.append(summary);
+ for(const r of rows){const item=el("div");item.className="gima-feature-row";const detail=el("div");detail.className="gima-feature-description";detail.append(el("strong",r.title));const note=el("p",[r.owner_name||"PIC belum ditentukan",labels[r.priority],labels[r.status],r.due_on?"Target: "+r.due_on:"Tanpa tenggat"].join(" • "));note.className="admin-meta";detail.append(note);if(r.description){const p=el("p",r.description);p.className="admin-meta";detail.append(p)}const edit=el("button","Edit");edit.type="button";edit.className="btn outline";edit.addEventListener("click",()=>{editing=r.id;title.value=r.title;owner.value=r.owner_name||"";due.value=r.due_on||"";survey.value=r.survey_id||"";priority.value=r.priority;progress.value=r.status;description.value=r.description||"";save.textContent="Simpan perubahan";cancel.hidden=false;cancel.style.display="inline-flex";form.scrollIntoView({behavior:"smooth",block:"start"})});item.append(detail,edit);list.append(item)}
+ };
+ const load=async(id,surveys)=>{const current=++request;orgId=id;reset();rows=[];list.replaceChildren();survey.replaceChildren();const empty=el("option","Tanpa survei terkait");empty.value="";survey.append(empty);for(const s of surveys||[]){const o=el("option",s.title);o.value=s.id;survey.append(o)}if(!id||!client())return;status.textContent="Memuat action plan...";
+ const {data,error}=await client().from("hr_action_plans").select("id,title,description,owner_name,due_on,priority,status,survey_id").eq("organization_id",id).order("created_at",{ascending:false}).limit(300);
+ if(current!==request)return;if(error){status.textContent="Action plan belum tersedia. Jalankan SQL Tahap 17 di Supabase: "+(error.code||error.message);return}rows=data||[];status.textContent=rows.length>=300?"Menampilkan maksimal 300 action plan.":"Action plan siap digunakan.";render()};
+ document.addEventListener("gima:surveys-loaded",ev=>load(ev.detail?.orgId,ev.detail?.surveys));
+ form.addEventListener("submit",async ev=>{ev.preventDefault();if(!orgId||!client())return;const id=orgId;const payload={organization_id:id,title:title.value.trim(),description:description.value.trim(),owner_name:owner.value.trim(),due_on:due.value||null,priority:priority.value,status:progress.value,survey_id:survey.value||null};save.disabled=true;const result=editing?await client().from("hr_action_plans").update(payload).eq("organization_id",id).eq("id",editing):await client().from("hr_action_plans").insert(payload);save.disabled=false;if(result.error){status.textContent="Gagal menyimpan: "+(result.error.code||result.error.message);return}status.textContent="Action plan berhasil disimpan.";const options=[...survey.options].slice(1).map(o=>({id:o.value,title:o.textContent}));await load(id,options);status.textContent="Action plan berhasil disimpan."});
+};
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
+})();
