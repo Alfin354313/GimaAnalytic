@@ -18,7 +18,7 @@ async function loadSurveys(){
   $("create-panel").hidden=!canEdit();
   renderSurveys();
   window.gimaFeatureClient=client;
-  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status}))}}));
+  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status,created_at:s.created_at}))}}));
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
   await renderBilling(orgId);
