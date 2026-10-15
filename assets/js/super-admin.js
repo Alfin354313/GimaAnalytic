@@ -41,12 +41,12 @@ async function load(){
 async function loadPending(){
  const {data,error}=await client.rpc("gima_platform_pending_requests");
  list.replaceChildren();
- if(error){status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
+ if(error){window.gimaPlatformPendingData=[];document.dispatchEvent(new CustomEvent("gima:platform-pending",{detail:[]}));status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
  status.textContent=(data||[]).length+" pengajuan menunggu verifikasi.";
  if(!(data||[]).length){const empty=el("p","Belum ada pengajuan. Masuk sebagai admin organisasi untuk mengirim pengajuan uji melalui Kontrak & Tagihan.");empty.className="admin-meta";list.append(empty)}
  window.gimaPlatformPendingData=data||[];document.dispatchEvent(new CustomEvent("gima:platform-pending",{detail:data||[]}));
  for(const r of data||[]){
-  const box=el("section");box.className="admin-box";box.style.marginTop="14px";
+  const box=el("section");box.className="admin-box";box.dataset.requestId=r.request_id;box.style.marginTop="14px";
   box.append(el("h3",r.organization_name+" — "+r.plan_name),el("p","Referensi: "+r.transfer_reference+" | Tanggal transfer: "+r.transfer_date));
   const note=el("textarea");note.placeholder="Catatan verifikasi (opsional, maksimal 2000 karakter)";note.maxLength=2000;note.rows=2;
   const approve=el("button","Setujui & Aktifkan");approve.className="btn";approve.type="button";
