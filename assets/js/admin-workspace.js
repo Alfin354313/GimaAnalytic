@@ -293,6 +293,7 @@ function renderCommercialReadiness(orgId){
   }
 }
 async function loadMembers(orgId){
+  document.dispatchEvent(new CustomEvent("gima:members-refresh",{detail:{orgId}}));
   const root=$("member-list");if(!root)return;
   root.replaceChildren(el("p","Memuat anggota...","admin-meta"));
   const {data,error}=await client.rpc("gima_list_organization_members",{p_organization_id:orgId});
