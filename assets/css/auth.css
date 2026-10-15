@@ -42,3 +42,22 @@
 .gima-login-contact{text-align:center;font-size:12px;color:#647c88;margin:16px 0 0}
 .gima-login-back{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:#326d81;text-decoration:none;font-size:13px;white-space:nowrap}
 @media(max-width:500px){.gima-login-page{padding:25px 14px 65px}.gima-login-card{padding:25px 20px}.gima-login-brand img{width:52px;height:52px}.gima-login-brand strong{font-size:16px}.gima-login-options{align-items:flex-start}.gima-login-help{max-width:155px}}
+
+/* Shared portal entry, aligned with the teal GIMA identity. */
+.gima-login-body{background:#f1f9f6}
+.gima-login-page{background:linear-gradient(140deg,#e3f5ef,#f9fcfb 55%,#e5f6f3)}
+.gima-login-page:before{background:linear-gradient(130deg,#a6dcd0,#d8f3e9)}
+.gima-login-page:after{background:linear-gradient(130deg,#b3e7dc,#e0f5ee)}
+.gima-login-decoration-left{background:#c1e9df}.gima-login-decoration-right{background:#ccece4}
+.gima-login-card{border-color:#dcece6;color:#103f3c;box-shadow:0 18px 65px #103f3c12;border-radius:22px}
+.gima-login-card h1,.gima-login-brand{color:#103f3c}
+.gima-login-subtitle{color:#5b7470;line-height:1.65}
+.gima-login-form label{color:#244f48}.gima-login-form input:not([type=checkbox]){border-color:#cedfd8;border-radius:10px;min-height:48px;color:#183f39}
+.gima-login-form input:focus{outline-color:#168884}
+.gima-password-field button,.gima-login-help a,.gima-login-contact a{color:#087773}
+.gima-login-options{justify-content:flex-end}.gima-login-help{color:#5b7470}
+.gima-login-submit{background:#20b2b4;color:#103f3c;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;min-height:48px}
+.gima-login-submit:focus-visible,.gima-login-back:focus-visible,.gima-password-field button:focus-visible{outline:3px solid #103f3c;outline-offset:3px}
+.gima-access-note{font-size:12px;line-height:1.6;color:#58736b;text-align:center;padding:14px 12px;background:#f1f9f6;border:1px solid #deeee6;border-radius:10px;margin:20px 0 0}
+.gima-login-contact{color:#5b7470;line-height:1.6}.gima-login-back{color:#22665b}
+@media(max-width:500px){.gima-login-help{max-width:none}.gima-login-card{border-radius:18px}.gima-login-options{margin-top:12px}}
