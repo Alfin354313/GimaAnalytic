@@ -44,6 +44,7 @@ async function loadPending(){
  if(error){status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
  status.textContent=(data||[]).length+" pengajuan menunggu verifikasi.";
  if(!(data||[]).length){const empty=el("p","Belum ada pengajuan. Masuk sebagai admin organisasi untuk mengirim pengajuan uji melalui Kontrak & Tagihan.");empty.className="admin-meta";list.append(empty)}
+ window.gimaPlatformPendingData=data||[];document.dispatchEvent(new CustomEvent("gima:platform-pending",{detail:data||[]}));
  for(const r of data||[]){
   const box=el("section");box.className="admin-box";box.style.marginTop="14px";
   box.append(el("h3",r.organization_name+" — "+r.plan_name),el("p","Referensi: "+r.transfer_reference+" | Tanggal transfer: "+r.transfer_date));
