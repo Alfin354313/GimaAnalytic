@@ -52,6 +52,7 @@ const init=()=>{
   const effectiveStatus=active?"Aktif":latest?.status==="active"?(latest.ends_on&&latest.ends_on<today?"Masa berlaku berakhir":"Belum berlaku"):(labels[latest?.status]||"Belum berlangganan");
   status.textContent=latest?"Status langganan: "+effectiveStatus+(active?" — diverifikasi dan dalam masa berlaku":" — akses belum dinyatakan aktif oleh panel ini"):"Belum ada langganan tercatat untuk organisasi ini.";
   const add=(heading,value)=>{const card=el("div");card.className="gima-feature-metric";card.append(el("span",heading),el("strong",value));info.append(card)};
+  document.dispatchEvent(new CustomEvent("gima:subscription-loaded",{detail:{orgId,effectiveStatus,active:Boolean(active),planName:catalog.find(p=>p.id===latest?.plan_id)?.name||"Belum ditentukan",endsOn:latest?.ends_on||null}}));
   add("Status efektif",effectiveStatus);
   add("Paket tercatat",catalog.find(p=>p.id===latest?.plan_id)?.name||"Belum ditentukan");
   add("Tanggal mulai",latest?.starts_on||"—");
