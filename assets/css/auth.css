@@ -28,3 +28,23 @@
 @media(max-width:760px){.gima-login-page{padding:22px 16px}.gima-login-layout{display:block;max-width:470px;min-height:0;border-radius:22px}.gima-login-story{display:none}.gima-login-card{position:relative;isolation:isolate;overflow:hidden;padding:44px 28px 30px;min-height:680px;align-items:center}.gima-login-card:before,.gima-login-card:after{content:"";position:absolute;z-index:-1;pointer-events:none;background:#edf8f3}.gima-login-card:before{width:210px;height:130px;top:-62px;left:-80px;transform:rotate(-35deg)}.gima-login-card:after{width:180px;height:110px;right:-100px;top:-15px;transform:rotate(30deg)}.gima-login-intro{margin:36px 0 28px}.gima-login-card h1{font-size:25px;letter-spacing:-.8px}.gima-login-brand img{width:58px;height:58px}.gima-login-subtitle{font-size:12px}.gima-login-form input{font-size:16px}.gima-login-footer{margin-top:30px}}
 @media(max-width:360px){.gima-login-page{padding:12px 10px}.gima-login-card{padding:35px 20px 26px}.gima-login-card h1{font-size:23px}.gima-login-help{font-size:10px}.gima-login-brand strong{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.gima-login-body *{transition:none!important;scroll-behavior:auto}}
+/* Fit laptop browser heights by reducing spacing, without clipping form feedback. */
+@media(min-width:761px) and (max-height:900px){
+ .gima-login-page{padding:16px}
+ .gima-login-layout{min-height:calc(100vh - 32px);min-height:calc(100dvh - 32px)}
+ .gima-login-story{display:grid;grid-template-rows:auto auto minmax(120px,1fr);gap:24px;min-height:0;padding:28px 36px 20px}
+ .gima-story-copy{margin-top:0}.gima-story-copy h2{font-size:clamp(28px,2.5vw,36px);line-height:1.16;margin-bottom:12px}.gima-story-copy p{font-size:14px;line-height:1.6}
+ .gima-login-visual{width:100%;height:100%;min-height:0;max-height:300px;object-fit:contain;margin:0;align-self:end}
+ .gima-login-card{padding:24px 36px}
+}
+@media(max-height:800px){
+ .gima-login-card{padding-top:20px;padding-bottom:20px;min-height:0}
+ .gima-login-brand img{width:46px;height:46px}.gima-login-brand strong{font-size:14px}.gima-login-brand small{font-size:11px;margin-top:3px}
+ .gima-login-intro{margin:20px 0 18px}.gima-login-card h1{font-size:24px;margin-bottom:7px}.gima-login-subtitle{font-size:12px;line-height:1.5}
+ .gima-login-form label{margin-bottom:7px}.gima-input-wrap{margin-bottom:14px}.gima-password-field{margin-bottom:0}
+ .gima-login-form input{min-height:46px;padding-top:11px;padding-bottom:11px}
+ .gima-login-help{margin:10px 0 16px}.gima-login-submit{min-height:46px;padding-top:11px;padding-bottom:11px}
+ .gima-access-note{padding:10px 12px;margin-top:12px}.gima-login-contact{padding-top:14px;margin-top:16px}.gima-login-footer{margin-top:18px}
+ .gima-login-form .auth-note{margin-top:10px}
+}
+@media(max-width:760px){.gima-login-card{min-height:0}.gima-login-layout{min-height:calc(100svh - 44px)}.gima-login-content{margin:auto}}
