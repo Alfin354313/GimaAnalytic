@@ -1,41 +1,39 @@
 <!doctype html>
-<html lang="id">
-<head>
+<html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>Masuk | GIMA Analytics</title>
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css?v=20261015-login">
-<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#103f3c"></head>
-<body class="gima-login-body">
+<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css?v=20261015-split">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#103f3c">
+</head><body class="gima-login-body">
 <main class="gima-login-page">
-  <div class="gima-login-decoration gima-login-decoration-left" aria-hidden="true"></div>
-  <div class="gima-login-decoration gima-login-decoration-right" aria-hidden="true"></div>
+ <div class="gima-login-layout">
+  <aside class="gima-login-story" aria-label="GIMA Analytics">
+   <a class="gima-story-brand gima-login-brand" href="/" aria-label="Giandra Maheswara — GIMA Analytics — Beranda"><img src="/assets/giandra-maheswara-logo.svg" alt=""><span><strong>GIANDRA<br>MAHESWARA</strong><small>GIMA Analytics</small></span></a>
+   <div class="gima-story-copy"><h2>Dengarkan tim.<br>Pahami datanya.<br>Ambil langkah tepat.</h2><p>Kelola survei dan pahami masukan karyawan dalam satu tempat.</p></div>
+   <img class="gima-login-visual" src="/assets/login-insights.svg" alt="" aria-hidden="true" width="560" height="400">
+  </aside>
   <section class="gima-login-card" aria-labelledby="login-title">
-    <a class="gima-login-brand" href="/" aria-label="GIMA Analytics - Beranda">
-      <img src="/assets/giandra-maheswara-logo.svg" alt="Logo Giandra Maheswara">
-      <span><strong>GIANDRA<br>MAHESWARA</strong><small>GIMA Analytics</small></span>
-    </a>
-    <h1 id="login-title">Masuk ke GIMA Analytics</h1>
-    <p class="gima-login-subtitle">Satu akun untuk mengelola survei dan memahami data organisasi Anda.</p>
+   <div class="gima-login-content">
+    <a class="gima-login-brand" href="/" aria-label="Giandra Maheswara — GIMA Analytics — Beranda"><img src="/assets/giandra-maheswara-logo.svg" alt=""><span><strong>GIANDRA<br>MAHESWARA</strong><small>GIMA Analytics</small></span></a>
+    <div class="gima-login-intro"><h1 id="login-title">Selamat datang kembali</h1><p class="gima-login-subtitle">Masuk untuk melanjutkan ke ruang kerja Anda.</p></div>
     <form id="login-form" class="gima-login-form">
-      <label for="login-email">Email</label>
-      <input id="login-email" name="email" type="email" autocomplete="username" placeholder="nama@perusahaan.com" required maxlength="254">
-      <label for="login-password">Kata sandi</label>
-      <div class="gima-password-field">
-        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required minlength="8">
-        <button id="toggle-password" type="button" aria-label="Tampilkan password" aria-pressed="false">Lihat</button>
-      </div>
-      <div class="gima-login-options"><span class="gima-login-help">Lupa kata sandi? <a href="mailto:halo@giandramaheswara.com?subject=Bantuan%20Akses%20GIMA%20Analytics">Hubungi pengelola</a></span></div>
-      <button class="gima-login-submit" id="login-submit" type="submit">Masuk</button>
-      <p id="login-status" role="status" aria-live="polite" class="auth-note"></p>
+     <label for="login-email">Email</label>
+     <div class="gima-input-wrap"><span class="gima-field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span><input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="nama@perusahaan.com" required maxlength="254"></div>
+     <label for="login-password">Kata sandi</label>
+     <div class="gima-input-wrap gima-password-field"><span class="gima-field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span><input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required minlength="8"><button id="toggle-password" type="button" aria-label="Tampilkan password" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="gima-eye-slash" aria-hidden="true"></span></button></div>
+     <p class="gima-login-help">Lupa kata sandi? <a href="mailto:halo@giandramaheswara.com?subject=Bantuan%20Akses%20GIMA%20Analytics">Hubungi pengelola</a></p>
+     <button class="gima-login-submit" id="login-submit" type="submit"><span>Masuk</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button>
+     <p id="login-status" role="status" aria-live="polite" class="auth-note"></p>
     </form>
-    <p class="gima-access-note">Anda akan diarahkan ke panel sesuai hak akses akun.</p>
-    <button id="gima-install" class="gima-login-submit" type="button" hidden>Instal GIMA Analytics</button>
-    <p class="gima-login-contact">Belum punya akun? <a href="/#contact">Hubungi Kami</a></p>
+    <p class="gima-access-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></svg><span>Akses sesuai peran akun Anda.</span></p>
+    <button id="gima-install" class="gima-login-install" type="button" hidden>Instal GIMA Analytics</button>
+    <p class="gima-login-contact">Belum memiliki akun? <a href="/#contact">Hubungi kami</a></p>
+    <footer class="gima-login-footer">© GIMA Analytics</footer>
+   </div>
   </section>
-  <a class="gima-login-back" href="/">← Kembali ke Beranda</a>
+ </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.10/dist/umd/supabase.min.js" defer></script>
-<script src="/assets/js/supabase-config.js" defer></script>
-<script src="/assets/js/auth-client.js" defer></script>
-<script src="/assets/js/login.js" defer></script>
-<script src="/assets/js/install-app.js" defer></script></body></html>
+<script src="/assets/js/supabase-config.js" defer></script><script src="/assets/js/auth-client.js" defer></script>
+<script src="/assets/js/login.js?v=20261015-split" defer></script><script src="/assets/js/install-app.js" defer></script>
+</body></html>
