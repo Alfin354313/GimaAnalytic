@@ -6,7 +6,7 @@ const templates=[
 ];
 const init=()=>{
  const panel=document.getElementById("create-panel"),form=document.getElementById("create-form");if(!panel||!form)return;
- const wrap=document.createElement("div");wrap.className="admin-box";wrap.style.cssText="margin-bottom:16px;padding:16px";
+ const wrap=document.createElement("div");wrap.className="admin-box gima-template-legacy";wrap.style.cssText="margin-bottom:16px;padding:16px";
  const heading=document.createElement("h3");heading.textContent="Template Survei HR";
  const note=document.createElement("p");note.className="admin-meta";note.textContent="Pilih template untuk membuat draft baru dengan lima pertanyaan Likert 1–5. Tinjau dan sesuaikan pertanyaan sebelum dipublikasikan.";
  const select=document.createElement("select");select.setAttribute("aria-label","Pilih template survei");
@@ -16,6 +16,8 @@ const init=()=>{
  const button=document.createElement("button");button.type="button";button.className="btn";button.textContent="Buat draft dari template";button.style.cssText="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 20px;border:1px solid #39a9b7;border-radius:9px;background:#4eb5bf;color:#ffffff;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(17,89,112,.12)";
  select.addEventListener("change",()=>{desc.textContent=select.value===""?"":templates[Number(select.value)].description});
  wrap.append(heading,note,select,desc,button);form.before(wrap);
+ document.addEventListener("gima:use-template",event=>{const index=Number(event.detail?.index);if(!Number.isInteger(index)||!templates[index])return;select.value=String(index);select.dispatchEvent(new Event("change"));button.click();});
+ window.gimaSurveyTemplates=templates.map(t=>({name:t.name,description:t.description}));
  const info=document.createElement("p");info.className="admin-meta";info.setAttribute("role","status");wrap.append(info);
  button.addEventListener("click",async()=>{
   if(select.value===""||!window.gimaFeatureClient)return;
