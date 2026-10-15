@@ -1,58 +1,13 @@
-(()=>{"use strict";
-const $=id=>document.getElementById(id);
-const id=new URLSearchParams(location.search).get("id");
-const labels=["Sangat tidak setuju","Tidak setuju","Netral","Setuju","Sangat setuju"];
-const answers=new Map();
-const sentKey="gima-survey-submitted:"+id;
-const wasSubmitted=()=>{try{return localStorage.getItem(sentKey)==="yes";}catch{return false;}};
-const markSubmitted=()=>{try{localStorage.setItem(sentKey,"yes");}catch{}};
-if(!id||!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(id)){$("public-title").textContent="Link survei tidak valid";return;}
-async function load(){
- if(!window.GIMA_AUTH?.configured())throw Error("Konfigurasi Supabase belum tersedia");
- const client=window.GIMA_AUTH.getClient();
- const {data,error}=await client.rpc("gima_public_survey",{p_survey_id:id});
- if(error)throw Error("Survei belum dapat dimuat. Pastikan SQL publikasi Tahap 7 sudah dijalankan.");
- if(!data){$("public-title").textContent="Survei tidak tersedia";$("public-status").textContent="Survei mungkin belum dipublikasikan atau sudah ditutup.";return;}
- $("public-title").textContent=data.title;
- $("public-description").textContent=data.description||"";
- const root=$("public-questions");root.replaceChildren();
- const questions=data.questions||[];
- questions.forEach((q,index)=>{
-  const field=document.createElement("fieldset");field.className="response-card";
-  const title=document.createElement("legend");title.textContent=(index+1)+". "+q.prompt;field.append(title);
-  const opts=document.createElement("div");opts.className="response-options";
-  labels.forEach((label,i)=>{
-   const wrapper=document.createElement("label");wrapper.className="response-option";
-   const radio=document.createElement("input");radio.type="radio";radio.name="question-"+q.id;radio.value=String(i+1);
-   radio.addEventListener("change",()=>{answers.set(q.id,i+1);refresh();});
-   wrapper.append(radio,document.createTextNode(" "+(i+1)+" — "+label));opts.append(wrapper);
-  });field.append(opts);root.append(field);
- });
- const controls=document.createElement("section");controls.className="response-card";
- const consent=document.createElement("label");const check=document.createElement("input");check.type="checkbox";
- consent.append(check,document.createTextNode(" Saya memahami tujuan survei dan menyetujui pemrosesan jawaban anonim saya untuk analisis agregat."));controls.append(consent);
- const progress=document.createElement("p");progress.setAttribute("role","status");controls.append(progress);
- const button=document.createElement("button");button.type="button";button.textContent="Kirim Jawaban";button.disabled=true;controls.append(button);
- root.append(controls);
- let submitting=false;let submitted=wasSubmitted();let feedback=submitted?"Browser ini sudah pernah mengirim jawaban untuk survei ini.":"";
- if(submitted){button.textContent="Sudah Terkirim";$("public-status").textContent="Jawaban dari browser ini sudah pernah dikirim."; }
- function refresh(){button.disabled=submitting||submitted||answers.size!==questions.length||!check.checked||questions.length===0;progress.textContent=feedback||("Terisi "+answers.size+" dari "+questions.length+" pertanyaan"+(check.checked?" • Persetujuan diberikan":" • Persetujuan belum diberikan"));}
- check.addEventListener("change",refresh);refresh();
- button.addEventListener("click",async()=>{
-  if(submitting||submitted||answers.size!==questions.length||!check.checked)return;
-  submitting=true;feedback="Sedang mengirim jawaban...";refresh();button.textContent="Mengirim...";
-  try{
-   const payload=questions.map(q=>({question_id:q.id,score:answers.get(q.id)}));
-   const {data:result,error:submitError}=await client.rpc("gima_submit_survey",{p_survey_id:id,p_answers:payload,p_consented:check.checked});
-   if(submitError)throw submitError;
-   if(result&&typeof result==="object"&&result.success===false)throw Error(result.message||"Jawaban belum diterima.");
-   submitted=true;markSubmitted();button.textContent="Jawaban Terkirim";
-   feedback="Terima kasih. Jawaban berhasil dikirim.";
-   $("public-status").textContent="Jawaban telah dikirim. Anda dapat menutup halaman ini.";
-  }catch(e){button.textContent="Coba Kirim Lagi";feedback="Pengiriman gagal. Jawaban belum terkonfirmasi tersimpan. "+(e.message||"Periksa koneksi dan konfigurasi fungsi Supabase.");}
-  finally{submitting=false;refresh();}
- });
- if(!submitted)$("public-status").textContent="Survei tanpa kode undangan. Isi seluruh pertanyaan dan berikan persetujuan sebelum mengirim.";
-}
-load().catch(e=>{$("public-title").textContent="Survei belum tersedia";$("public-status").textContent=e.message;});
+(()=>{'use strict';const root=document.getElementById('survey-app'),id=new URLSearchParams(location.search).get('id'),answers=new Map(),labels=['Sangat tidak setuju','Tidak setuju','Netral','Setuju','Sangat setuju'];const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};let survey=null,questions=[],client=null,index=0,consented=false,submitting=false,submitted=false,feedback='',stage='welcome';const key='gima-survey-submitted:'+id;const wasSubmitted=()=>{try{return localStorage.getItem(key)==='yes';}catch{return false;}};const markSubmitted=()=>{try{localStorage.setItem(key,'yes');}catch{}};
+function state(title,message){root.replaceChildren();const card=el('section','survey-state');card.append(el('span','survey-state-icon','ⓘ'),el('h1','',title),el('p','',message));root.append(card);}
+function button(label,cls,action){const b=el('button',cls,label);b.type='button';b.onclick=action;return b;}
+function steps(current){const nav=el('ol','survey-steps');for(const[i,label]of ['Persetujuan','Pengisian','Selesai'].entries()){const li=el('li',i<current?'complete':i===current?'active':'');if(i===current)li.setAttribute('aria-current','step');li.append(el('span','',i<current?'✓':String(i+1)),document.createTextNode(label));nav.append(li);}return nav;}
+function renderWelcome(){stage='welcome';root.replaceChildren();const card=el('section','survey-welcome'),intro=el('div','survey-intro'),copy=el('div','survey-intro-copy');copy.append(el('p','survey-eyebrow',survey.title),el('h1','','Suara Anda, perubahan bersama.'),el('p','survey-intro-description',survey.description||'Mari bagikan pengalaman Anda di tempat kerja untuk mendukung langkah perbaikan organisasi.'));const chips=el('div','survey-chips');chips.append(el('span','','◷ Estimasi '+Math.max(1,Math.ceil(questions.length*.4))+' menit'),el('span','','▤ '+questions.length+' pertanyaan'));copy.append(chips);const img=el('img','survey-illustration');img.src='/assets/survey-welcome.svg';img.alt='Ilustrasi pengisian survei dan kerja sama tim';intro.append(copy,img);const before=el('div','survey-before');before.append(el('h2','','Sebelum memulai'),el('p','','Jawaban Anda digunakan untuk analisis secara agregat guna mendukung langkah perbaikan di organisasi. Partisipasi bersifat sukarela.'));const privacy=el('details','survey-privacy');const summary=el('summary','','ⓘ Informasi penggunaan data');privacy.append(summary,el('p','','Jawaban disimpan untuk analisis agregat. Hasil per pertanyaan hanya ditampilkan setelah memenuhi minimum 5 respons valid. Jangan memasukkan nama atau informasi pribadi dalam jawaban. Untuk pertanyaan mengenai penggunaan atau penghapusan data, hubungi pengelola survei.'));const label=el('label','survey-consent'),check=el('input');check.type='checkbox';check.checked=consented;check.setAttribute('aria-label','Persetujuan penggunaan jawaban survei');label.append(check,el('span','','Saya telah membaca dan menyetujui penggunaan jawaban saya untuk analisis survei ini.'));const start=button('Mulai Survei  →','survey-primary',()=>{if(!consented||!questions.length)return;index=0;renderQuestion();focusQuestion();});start.disabled=!consented||!questions.length;check.onchange=()=>{consented=check.checked;start.disabled=!consented||!questions.length;};before.append(privacy,label,start);if(!questions.length)before.append(el('p','survey-error','Survei ini belum memiliki pertanyaan. Hubungi pengelola.'));card.append(intro,before);root.append(card);}
+function focusQuestion(){const heading=root.querySelector('legend');heading?.focus({preventScroll:true});}
+function renderQuestion(){stage='questions';root.replaceChildren(steps(1));const progress=el('div','survey-progress-row'),track=el('div','survey-progress-track'),fill=el('span');fill.style.width=answers.size/questions.length*100+'%';track.setAttribute('role','progressbar');track.setAttribute('aria-label','Pertanyaan terjawab');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(questions.length));track.setAttribute('aria-valuenow',String(answers.size));track.append(fill);progress.append(track,el('span','','Pertanyaan '+(index+1)+' dari '+questions.length));root.append(progress);const q=questions[index],card=el('section','survey-question'),category=el('span','survey-question-category','▤ '+survey.title);card.append(category);const field=el('fieldset'),legend=el('legend','',q.prompt);legend.tabIndex=-1;field.append(legend);const options=el('div','survey-answer-options');labels.forEach((label,i)=>{const wrapper=el('label','survey-answer'),radio=el('input');radio.type='radio';radio.name='question-'+q.id;radio.value=String(i+1);radio.checked=answers.get(q.id)===i+1;radio.disabled=submitting;radio.onchange=()=>{answers.set(q.id,i+1);feedback='';renderQuestion();const checked=root.querySelector('input:checked');checked?.focus({preventScroll:true});};wrapper.append(radio,el('strong','',String(i+1)),el('span','',label));options.append(wrapper);});field.append(options);card.append(field,el('p','survey-question-hint','ⓘ Pilih satu jawaban untuk melanjutkan.'));const status=el('p',feedback?'survey-submit-status':'');status.setAttribute('role','status');status.textContent=feedback;card.append(status);const actions=el('div','survey-question-actions'),back=button('← Kembali','survey-secondary',()=>{if(submitting)return;if(index===0)renderWelcome();else{index--;renderQuestion();focusQuestion();}}),last=index===questions.length-1,next=button(submitting?'Mengirim…':last?'Kirim Jawaban  ✓':'Lanjut  →','survey-primary',()=>{if(submitting||!answers.has(q.id))return;if(last)submit();else{index++;renderQuestion();focusQuestion();}});back.disabled=submitting;next.disabled=submitting||!answers.has(q.id);actions.append(back,next);card.append(actions);root.append(card);}
+async function submit(){if(submitting||submitted||!consented||answers.size!==questions.length||!questions.length)return;submitting=true;feedback='Sedang mengirim jawaban…';renderQuestion();try{const{data,error}=await client.rpc('gima_submit_survey',{p_survey_id:id,p_answers:questions.map(q=>({question_id:q.id,score:answers.get(q.id)})),p_consented:consented});if(error)throw error;if(data&&typeof data==='object'&&data.success===false)throw Error(data.message||'Jawaban belum diterima.');submitted=true;markSubmitted();feedback='';renderComplete(false);}catch(error){feedback='Pengiriman belum terkonfirmasi. Jawaban tetap ada di halaman ini. Silakan coba lagi. '+(error.message||'Periksa koneksi Anda.');}finally{submitting=false;if(!submitted)renderQuestion();}}
+function renderComplete(previous){stage='complete';root.replaceChildren();const card=el('section','survey-complete'),check=el('span','survey-success-check','✓');check.setAttribute('aria-hidden','true');card.append(check,el('h1','',previous?'Browser ini sudah pernah mengirim jawaban.':'Terima kasih atas partisipasi Anda!'),el('strong','',previous?'Pengiriman sebelumnya tercatat pada browser ini.':'Jawaban survei berhasil dikirim.'),el('p','','Masukan Anda membantu organisasi memahami pengalaman kerja dan menentukan langkah perbaikan.'),steps(2));const follow=el('section','survey-followup');follow.append(el('h2','','Apa selanjutnya?'));const items=el('div');for(const[title,text]of [['Jawaban dianalisis secara agregat','Hasil per pertanyaan hanya ditampilkan setelah memenuhi batas minimum respons.'],['Hasil digunakan untuk menyusun tindak lanjut','Analisis menjadi masukan bagi organisasi dalam menentukan langkah perbaikan.']]){const item=el('div');item.append(el('span','survey-followup-icon','▥'),el('strong','',title),el('p','',text));items.append(item);}follow.append(items);const close=button('Tutup Halaman','survey-primary',()=>{window.close();close.textContent='Anda dapat menutup tab ini';});card.append(follow,close);root.append(card);}
+if(!id||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)){state('Link survei tidak valid','Buka tautan lengkap yang dibagikan oleh pengelola survei.');return;}
+async function load(){if(!window.GIMA_AUTH?.configured())throw Error('Koneksi survei belum dikonfigurasi. Hubungi pengelola.');client=window.GIMA_AUTH.getClient();const{data,error}=await client.rpc('gima_public_survey',{p_survey_id:id});if(error)throw Error('Survei belum dapat dimuat. Coba kembali atau hubungi pengelola.');if(!data){state('Survei tidak tersedia','Survei mungkin belum dipublikasikan atau sudah ditutup.');return;}survey=data;questions=Array.isArray(data.questions)?data.questions:[];if(new Set(questions.map(q=>q.id)).size!==questions.length||questions.some(q=>!q.id||typeof q.prompt!=='string'))throw Error('Pertanyaan survei belum dapat diproses. Hubungi pengelola.');document.title=data.title+' | GIMA Analytics';if(wasSubmitted()){submitted=true;renderComplete(true);}else renderWelcome();}
+load().catch(error=>state('Survei belum tersedia',error.message||'Periksa koneksi dan coba kembali.'));
 })();

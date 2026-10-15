@@ -18,7 +18,7 @@ async function loadSurveys(){
   $("create-panel").hidden=!canEdit();
   renderSurveys();
   window.gimaFeatureClient=client;
-  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status}))}}));
+  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status,created_at:s.created_at}))}}));
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
   await renderBilling(orgId);
@@ -198,7 +198,7 @@ async function renderBilling(orgId){
   root.append(el("p","Invoice otomatis dibuat saat kontrak disimpan. QRIS dan Virtual Account belum aktif sampai payment gateway terintegrasi.","admin-meta"));
   for(const i of invoices){
     const verified=payments.filter(p=>p.invoice_id===i.id&&p.status==="verified").reduce((sum,p)=>sum+Number(p.amount_idr),0);
-    const item=el("div",undefined,"billing-record");
+    const item=el("div",undefined,"billing-record");item.dataset.invoiceId=i.id;
     item.append(el("p",i.invoice_number+" • "+money(i.amount_idr)+" • Jatuh tempo "+i.due_on+" • Terverifikasi "+money(verified)+" • "+i.status));
     const method=el("select");
     for(const [value,label] of [["bank_transfer","Transfer bank manual"],["qris","QRIS (belum aktif)"],["virtual_account","Virtual Account (belum aktif)"]]){
@@ -255,6 +255,7 @@ async function renderBilling(orgId){
     ["amount_idr","Jumlah transfer (Rp)","number"],["paid_on","Tanggal transfer","date"],["transfer_reference","Referensi transfer","text"]
   ],"Catat Pembayaran (Menunggu Verifikasi)",v=>client.from("client_payments").insert({...v,organization_id:orgId,amount_idr:Number(v.amount_idr),status:"pending"}));
   root.append(el("p","Pencatatan ini tidak memindahkan dana, tidak mengirim invoice otomatis, dan tidak membuktikan pembayaran sebelum diverifikasi pemilik.","admin-meta"));
+  document.dispatchEvent(new CustomEvent("gima:billing-loaded",{detail:{orgId,contracts,invoices,payments}}));
 }
 function renderCommercialReadiness(orgId){
   const root=$("commercial-content");if(!root)return;
@@ -293,6 +294,7 @@ function renderCommercialReadiness(orgId){
   }
 }
 async function loadMembers(orgId){
+  document.dispatchEvent(new CustomEvent("gima:members-refresh",{detail:{orgId}}));
   const root=$("member-list");if(!root)return;
   root.replaceChildren(el("p","Memuat anggota...","admin-meta"));
   const {data,error}=await client.rpc("gima_list_organization_members",{p_organization_id:orgId});

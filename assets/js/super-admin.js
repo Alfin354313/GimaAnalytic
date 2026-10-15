@@ -3,13 +3,13 @@ const $=id=>document.getElementById(id),status=$("super-status"),list=$("super-l
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
 let client,loading=false;
 const sections={};let currentTab="overview";
-const tabs=el("nav");tabs.setAttribute("aria-label","Menu Super Admin");tabs.style.display="flex";tabs.style.flexWrap="wrap";tabs.style.gap="8px";tabs.style.margin="20px 0";
+const tabs=el("nav");tabs.className="super-nav";tabs.setAttribute("aria-label","Menu Super Admin");tabs.style.display="flex";tabs.style.flexWrap="wrap";tabs.style.gap="8px";tabs.style.margin="20px 0";
 const labels={overview:"Ringkasan",customers:"Pelanggan",requests:"Pengajuan Pembayaran",subscriptions:"Langganan",history:"Riwayat Keputusan"};
 const buttons={};
 function activate(tab){currentTab=labels[tab]?tab:"overview";for(const [key,section] of Object.entries(sections))section.hidden=key!==currentTab;for(const [key,button] of Object.entries(buttons)){button.setAttribute("aria-current",key===currentTab?"page":"false");button.className=key===currentTab?"btn":"btn outline"}if(location.hash!=="#"+currentTab)history.replaceState(null,"","#"+currentTab)}
 for(const [key,label] of Object.entries(labels)){const b=el("button",label);b.type="button";b.className="btn outline";b.addEventListener("click",()=>activate(key));buttons[key]=b;tabs.append(b)}
 const holder=el("div");
-for(const key of Object.keys(labels)){const section=el("section");section.hidden=true;section.setAttribute("aria-label",labels[key]);sections[key]=section;holder.append(section)}
+for(const key of Object.keys(labels)){const section=el("section");section.dataset.superView=key;section.hidden=true;section.setAttribute("aria-label",labels[key]);sections[key]=section;holder.append(section)}
 const root=$("super-list");root.before(tabs);root.after(holder);sections.requests.append(root);
 
 
@@ -19,7 +19,8 @@ async function loadDashboard(){
  const {data,error}=await client.rpc("gima_platform_dashboard");
  dashboard.replaceChildren();
  if(error){const p=el("p",error.code==="PGRST202"?"Dashboard ringkasan belum aktif. Jalankan SQL Tahap 18D di Supabase.":"Ringkasan belum tersedia: "+(error.code||error.message));p.setAttribute("role","status");dashboard.append(p);return}
- const d=data||{};
+ const d=data||{};window.gimaPlatformDashboardData=d;
+ document.dispatchEvent(new CustomEvent("gima:platform-data",{detail:d}));
  const title=el("h2","Ringkasan Platform");dashboard.append(title);
  const cards=el("div");cards.style.display="grid";cards.style.gridTemplateColumns="repeat(auto-fit,minmax(170px,1fr))";cards.style.gap="12px";
  [["Total Organisasi",d.organization_count],["Menunggu Verifikasi",d.pending_count],["Langganan Aktif",d.active_count],["Sudah Ditinjau",d.reviewed_count]].forEach(([label,value])=>{const card=el("div");card.className="admin-box";card.append(el("p",label),el("h2",String(value??0)));cards.append(card)});dashboard.append(cards);
@@ -40,11 +41,12 @@ async function load(){
 async function loadPending(){
  const {data,error}=await client.rpc("gima_platform_pending_requests");
  list.replaceChildren();
- if(error){status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
+ if(error){window.gimaPlatformPendingData=[];document.dispatchEvent(new CustomEvent("gima:platform-pending",{detail:[]}));status.textContent=error.code==="42501"?"Akses ditolak: akun ini bukan Super Admin.":"Tidak dapat memuat pengajuan: "+(error.code||error.message);return}
  status.textContent=(data||[]).length+" pengajuan menunggu verifikasi.";
  if(!(data||[]).length){const empty=el("p","Belum ada pengajuan. Masuk sebagai admin organisasi untuk mengirim pengajuan uji melalui Kontrak & Tagihan.");empty.className="admin-meta";list.append(empty)}
+ window.gimaPlatformPendingData=data||[];document.dispatchEvent(new CustomEvent("gima:platform-pending",{detail:data||[]}));
  for(const r of data||[]){
-  const box=el("section");box.className="admin-box";box.style.marginTop="14px";
+  const box=el("section");box.className="admin-box";box.dataset.requestId=r.request_id;box.style.marginTop="14px";
   box.append(el("h3",r.organization_name+" — "+r.plan_name),el("p","Referensi: "+r.transfer_reference+" | Tanggal transfer: "+r.transfer_date));
   const note=el("textarea");note.placeholder="Catatan verifikasi (opsional, maksimal 2000 karakter)";note.maxLength=2000;note.rows=2;
   const approve=el("button","Setujui & Aktifkan");approve.className="btn";approve.type="button";
