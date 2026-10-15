@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>Masuk | GIMA Analytics</title>
-<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css">
-<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#123c70"></head>
+<link rel="stylesheet" href="/assets/css/base.css"><link rel="stylesheet" href="/assets/css/auth.css?v=20261015-login">
+<link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#103f3c"></head>
 <body class="gima-login-body">
 <main class="gima-login-page">
   <div class="gima-login-decoration gima-login-decoration-left" aria-hidden="true"></div>
@@ -15,23 +15,22 @@
       <span><strong>GIANDRA<br>MAHESWARA</strong><small>GIMA Analytics</small></span>
     </a>
     <h1 id="login-title">Masuk ke GIMA Analytics</h1>
-    <p class="gima-login-subtitle">Akses dashboard survei dan analisis perusahaan Anda.</p>
+    <p class="gima-login-subtitle">Satu akun untuk mengelola survei dan memahami data organisasi Anda.</p>
     <form id="login-form" class="gima-login-form">
-      <label for="login-email">Email Perusahaan</label>
+      <label for="login-email">Email</label>
       <input id="login-email" name="email" type="email" autocomplete="username" placeholder="nama@perusahaan.com" required maxlength="254">
-      <label for="login-password">Password</label>
+      <label for="login-password">Kata sandi</label>
       <div class="gima-password-field">
-        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required minlength="8">
+        <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required minlength="8">
         <button id="toggle-password" type="button" aria-label="Tampilkan password" aria-pressed="false">Lihat</button>
       </div>
-      <div class="gima-login-options"><label class="gima-remember-label"><input type="checkbox" id="remember-login" checked> Ingat saya</label><span class="gima-login-help">Lupa password? <a href="mailto:halo@giandramaheswara.com?subject=Bantuan%20Akses%20GIMA%20Analytics">Hubungi pengelola</a></span></div>
+      <div class="gima-login-options"><span class="gima-login-help">Lupa kata sandi? <a href="mailto:halo@giandramaheswara.com?subject=Bantuan%20Akses%20GIMA%20Analytics">Hubungi pengelola</a></span></div>
       <button class="gima-login-submit" id="login-submit" type="submit">Masuk</button>
       <p id="login-status" role="status" aria-live="polite" class="auth-note"></p>
     </form>
-    <div class="gima-login-divider"><span>atau masuk dengan</span></div>
-    <div class="gima-social-logins"><button type="button" disabled title="Login Google belum dikonfigurasi"><span class="gima-google-letter">G</span> Google</button><button type="button" disabled title="Login Microsoft belum dikonfigurasi"><span class="gima-ms-icon">▦</span> Microsoft</button></div>
-    <button id="gima-install" class="gima-login-submit" type="button" hidden>Instal GIMA Analytics</button><p class="gima-login-caption">Google dan Microsoft belum tersedia.</p>
-    <p class="gima-login-contact">Belum punya akun? <a href="/#kontak">Hubungi Kami</a></p>
+    <p class="gima-access-note">Anda akan diarahkan ke panel sesuai hak akses akun.</p>
+    <button id="gima-install" class="gima-login-submit" type="button" hidden>Instal GIMA Analytics</button>
+    <p class="gima-login-contact">Belum punya akun? <a href="/#contact">Hubungi Kami</a></p>
   </section>
   <a class="gima-login-back" href="/">← Kembali ke Beranda</a>
 </main>
