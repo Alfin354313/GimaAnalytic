@@ -45,5 +45,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/s/:slug",
+      "destination": "/isi-survei.html?slug=:slug"
+    }
   ]
 }

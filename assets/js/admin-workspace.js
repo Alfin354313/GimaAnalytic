@@ -1,6 +1,7 @@
 (()=>{"use strict";
 const $=id=>document.getElementById(id),status=$("admin-status"),message=$("admin-message");
 let client,user,orgs=[],surveys=[],activeSurvey=null;
+let linksReady=false;
 const say=s=>{message.textContent=s;};
 const role=()=>orgs.find(o=>o.id===$("org-select").value)?.role;
 const canEdit=()=>["owner","admin"].includes(role());
@@ -9,7 +10,12 @@ async function loadSurveys(){
   activeSurvey=null;$("question-panel").hidden=true;
   const orgId=$("org-select").value;
   if(!orgId)return;
-  const {data,error}=await client.from("surveys").select("id,title,description,status,created_at").eq("organization_id",orgId).order("created_at",{ascending:false});
+  let result=await client.from("surveys").select("id,title,description,status,created_at,slug").eq("organization_id",orgId).order("created_at",{ascending:false});
+  const shortLinksAvailable=!result.error;
+  if(result.error&&["42703","PGRST204"].includes(result.error.code))result=await client.from("surveys").select("id,title,description,status,created_at").eq("organization_id",orgId).order("created_at",{ascending:false});
+  if($("org-select").value!==orgId)return;
+  linksReady=shortLinksAvailable;$("survey-slug").disabled=!linksReady;document.dispatchEvent(new Event("gima:survey-links-ready"));
+  const {data,error}=result;
   if(error){say("Gagal memuat survei: "+(error.code||error.message));return;}
   surveys=data||[];$("stat-total").textContent=surveys.length;
   $("stat-draft").textContent=surveys.filter(s=>s.status==="draft").length;
@@ -18,7 +24,7 @@ async function loadSurveys(){
   $("create-panel").hidden=!canEdit();
   renderSurveys();
   window.gimaFeatureClient=client;
-  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status,created_at:s.created_at}))}}));
+  document.dispatchEvent(new CustomEvent("gima:surveys-loaded",{detail:{orgId,surveys:surveys.map(s=>({id:s.id,title:s.title,status:s.status,created_at:s.created_at,slug:s.slug}))}}));
   await loadMembers(orgId);
   renderCommercialReadiness(orgId);
   await renderBilling(orgId);
@@ -366,8 +372,15 @@ function renderSurveys(){
     const actions=el("div",undefined,"admin-actions");
     actions.append(action("Pertanyaan",()=>openQuestions(s)));
     actions.append(action("Laporan",()=>openReport(s)));
-    if(s.status==="published")actions.append(action("Salin Link Survei",async()=>{const link=new URL("/isi-survei.html?id="+encodeURIComponent(s.id),window.location.origin).href;try{await navigator.clipboard.writeText(link);say("Link survei disalin. Bagikan tautan ini kepada responden.");}catch{window.prompt("Salin link survei:",link);}}));
+    if(s.status==="published")actions.append(action("Salin Link Survei",async()=>{const link=window.GIMA_SURVEY_LINKS.link(s);try{await navigator.clipboard.writeText(link);say("Link survei disalin. Bagikan tautan ini kepada responden.");}catch{window.prompt("Salin link survei:",link);}}));
+    if(s.slug)card.append(el("p",window.GIMA_SURVEY_LINKS.link(s),"admin-meta"));
     if(canEdit()){
+      if(linksReady&&(s.status==="draft"||(s.status==="published"&&!s.slug)))actions.append(action("Atur Link Singkat",async()=>{
+        const value=window.prompt("Nama link 3–64 karakter: huruf kecil, angka, dan tanda hubung. Link dikunci setelah publikasi.",s.slug||window.GIMA_SURVEY_LINKS.slugify(s.title));
+        if(value===null)return;const slug=value.trim();
+        if(!window.GIMA_SURVEY_LINKS.valid(slug)){say("Link harus 3–64 karakter, memakai huruf kecil, angka, dan tanda hubung antar kata.");return;}
+        await updateSurvey(s,{slug});
+      }));
       if(s.status==="draft"){
         actions.append(action("Ubah judul",async()=>{const title=window.prompt("Judul survei (3–160 karakter):",s.title);if(title===null)return;const t=title.trim();if(t.length<3||t.length>160){say("Judul harus 3–160 karakter.");return;}await updateSurvey(s,{title:t});}));
         actions.append(action("Publikasikan",async()=>{const {count,error}=await client.from("survey_questions").select("id",{count:"exact",head:true}).eq("survey_id",s.id);if(error){say("Tidak dapat memeriksa pertanyaan.");return;}if(!count){say("Tambahkan minimal satu pertanyaan sebelum publikasi.");return;}if(window.confirm("Publikasikan survei dan aktifkan pengumpulan jawaban publik?"))await updateSurvey(s,{status:"published"});}));
@@ -381,7 +394,7 @@ function renderSurveys(){
 }
 async function updateSurvey(s,patch){
   const {error}=await client.from("surveys").update(patch).eq("id",s.id).eq("organization_id",$("org-select").value);
-  if(error){say("Gagal menyimpan: "+(error.code||error.message));return;}
+  if(error){say(error.code==="23505"?"Nama link sudah digunakan. Pilih nama lain, misalnya tambahkan tahun.":"Gagal menyimpan: "+(error.code||error.message));return;}
   say("Perubahan tersimpan.");await loadSurveys();
 }
 async function openReport(s){
@@ -637,10 +650,12 @@ $("create-form").addEventListener("submit",async e=>{
   e.preventDefault();if(!canEdit())return;
   const title=$("survey-title").value.trim(),description=$("survey-description").value.trim();
   if(title.length<3||title.length>160)return;
+  const slug=$("survey-slug").value.trim();
+  if(linksReady&&slug&&!window.GIMA_SURVEY_LINKS.valid(slug)){say("Format link singkat tidak valid.");return;}
   const button=e.currentTarget.querySelector("button");button.disabled=true;
   try{
-    const {error}=await client.from("surveys").insert({organization_id:$("org-select").value,created_by:user.id,title,description,status:"draft"});
-    if(error){say("Gagal membuat draft: "+(error.code||error.message));return;}
+    const {error}=await client.from("surveys").insert({organization_id:$("org-select").value,created_by:user.id,title,description,status:"draft",...(linksReady&&slug?{slug}:{})});
+    if(error){say(error.code==="23505"?"Nama link sudah digunakan. Ubah link singkat lalu coba lagi.":"Gagal membuat draft: "+(error.code||error.message));return;}
     $("create-form").reset();say("Draft survei berhasil dibuat.");await loadSurveys();
   }finally{button.disabled=false;}
 });

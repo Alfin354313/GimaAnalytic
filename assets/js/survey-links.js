@@ -1,0 +1,13 @@
+(()=>{'use strict';
+const valid=s=>typeof s==='string'&&s.length>=3&&s.length<=64&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s);
+const slugify=s=>String(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,64).replace(/-$/,'');
+const link=(s,origin=location.origin)=>new URL(s.slug&&valid(s.slug)?'/s/'+s.slug:'/isi-survei?id='+encodeURIComponent(s.id),origin).href;
+window.GIMA_SURVEY_LINKS={valid,slugify,link};
+const title=document.getElementById('survey-title'),slug=document.getElementById('survey-slug'),preview=document.getElementById('survey-link-preview');
+if(!title||!slug||!preview)return;let manual=false;
+const render=()=>{preview.textContent=slug.disabled?'Link singkat memerlukan SQL 025. Link lama tetap tersedia.':location.origin+'/s/'+(slug.value||'tema-survei');};
+title.addEventListener('input',()=>{if(!manual)slug.value=slugify(title.value)||'';render();});
+slug.addEventListener('input',()=>{manual=Boolean(slug.value);render();});
+slug.form?.addEventListener('reset',()=>{manual=false;queueMicrotask(render);});
+document.addEventListener('gima:survey-links-ready',render);render();
+})();
