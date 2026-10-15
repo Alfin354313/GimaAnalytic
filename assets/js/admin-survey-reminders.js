@@ -14,7 +14,7 @@ const init=()=>{
  box.append(picker,message,buttons,status);view.append(box);
  let rows=[],orgId=null;
  const selected=()=>rows.find(r=>r.id===picker.value);
- const link=r=>new URL("/isi-survei.html?id="+encodeURIComponent(r.id),window.location.origin).href;
+ const link=r=>window.GIMA_SURVEY_LINKS.link(r);
  const defaultMessage=r=>"Halo, kami mengundang Anda untuk mengisi survei "+r.title+". Partisipasi bersifat sukarela. Silakan baca informasi persetujuan dan privasi sebelum mengisi. Link survei: "+link(r)+" Terima kasih.";
  const update=()=>{const r=selected();message.value=r?defaultMessage(r):"";for(const b of [wa,email,copy])b.disabled=!r;status.textContent=r?(window.location.hostname.endsWith(".vercel.app")&&window.location.hostname.includes("-")?"Perhatian: link memakai domain deployment Preview. Jangan bagikan kepada responden sungguhan; gunakan domain Production yang stabil.":"Tinjau isi pesan sebelum membagikan. Kirim hanya kepada penerima yang sesuai."):"Belum ada survei berstatus published."};
  picker.addEventListener("change",update);
