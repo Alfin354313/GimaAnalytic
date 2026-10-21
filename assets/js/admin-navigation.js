@@ -118,31 +118,47 @@ const setup=()=>{
     addMetric(metrics,"Siap dianalisis",eligible.length,"Minimal satu pertanyaan memenuhi ambang privasi");
     addHeading(rs,"Survei & akses responden");makeRows(rs,"respondents");
     addNote(rs,"Jumlah responden unik tidak ditampilkan karena belum tersedia sebagai metrik terverifikasi. Gunakan ringkasan respons per pertanyaan.");
-    addHeading(an,"Ringkasan hasil analitik");
-    metrics=metricGrid(an);
+    // Executive analytics summary: this is distinct from the detailed analysis tab.
+    an.classList.add("gima-analytics-summary");
+    const heading=document.createElement("div");heading.className="gima-analytics-heading";
+    const headingText=document.createElement("div");const eyebrow=document.createElement("span");eyebrow.className="gima-analytics-eyebrow";eyebrow.textContent="◈ PEOPLE ANALYTICS";
+    const headingTitle=document.createElement("h3");headingTitle.textContent="Ringkasan Hasil Analitik";
+    const headingDesc=document.createElement("p");headingDesc.textContent="Pantau hasil survei, lihat kekuatan organisasi, dan temukan prioritas perbaikan.";
+    headingText.append(eyebrow,headingTitle,headingDesc);
+    const headingArt=document.createElement("div");headingArt.className="gima-analytics-art";headingArt.setAttribute("aria-hidden","true");headingArt.textContent="▥";
+    heading.append(headingText,headingArt);an.append(heading);
+    metrics=metricGrid(an);metrics.classList.add("gima-analytics-kpis");
     addMetric(metrics,"Survei tersedia",rows.length,"Dalam organisasi");
-    addMetric(metrics,"Hasil dapat dianalisis",eligible.length,"Minimal lima respons valid per pertanyaan");
-    addMetric(metrics,"Menunggu kecukupan data",summary.filter(x=>!x.error).length-eligible.length,"Belum melewati ambang privasi");
+    addMetric(metrics,"Hasil dapat dianalisis",eligible.length,"Minimal 5 respons valid");
+    addMetric(metrics,"Menunggu kecukupan data",summary.filter(x=>!x.error).length-eligible.length,"Menunggu ambang privasi");
+    const icons=["▤","◉","◷"];metrics.querySelectorAll(".gima-feature-metric").forEach((card,i)=>{const icon=document.createElement("span");icon.className="gima-analytics-kpi-icon";icon.textContent=icons[i];icon.setAttribute("aria-hidden","true");card.prepend(icon);});
     if(featureState.loading)addNote(an,"Memuat hasil analisis...");
     for(const {survey,data,error} of summary){
-      const box=document.createElement("section");box.className="gima-feature-result";addHeading(box,survey.title);
-      if(error)addNote(box,"Analisis belum dapat diakses: "+(error.code||error.message));
+      const box=document.createElement("section");box.className="gima-feature-result gima-analytics-result";
+      const header=document.createElement("div");header.className="gima-analytics-result-heading";
+      const headerCopy=document.createElement("div");const label=document.createElement("span");label.className="gima-analytics-eyebrow";label.textContent="HASIL SURVEI";
+      const name=document.createElement("h3");name.textContent=survey.title;headerCopy.append(label,name);header.append(headerCopy);
+      if(error){addNote(box,"Analisis belum dapat diakses: "+(error.code||error.message));}
       else{
-        const ready=data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null);
+        const ready=data.filter(q=>Number(q.response_count)>=5&&q.average_score!==null&&Number.isFinite(Number(q.average_score)));
         if(!ready.length)addNote(box,"Belum cukup respons untuk menampilkan skor.");
         else{
           const average=ready.reduce((sum,q)=>sum+Number(q.average_score),0)/ready.length;
-          addNote(box,"Rata-rata "+average.toFixed(2)+" / 5 dari "+ready.length+" pertanyaan yang memenuhi ambang privasi.");
-          for(const q of ready.slice(0,6)){
-            const line=document.createElement("div");line.className="gima-feature-score";
-            const title=document.createElement("span");title.textContent=q.question_prompt;
-            const track=document.createElement("div");track.className="gima-feature-track";
-            const fill=document.createElement("i");fill.style.width=Math.min(100,Math.max(0,Number(q.average_score)*20))+"%";track.append(fill);
-            const score=document.createElement("b");score.textContent=Number(q.average_score).toFixed(2)+"/5";
-            line.append(title,track,score);box.append(line);
+          const score=document.createElement("div");score.className="gima-analytics-overall";const scoreValue=document.createElement("strong");scoreValue.textContent=average.toLocaleString("id-ID",{maximumFractionDigits:2});const scoreLabel=document.createElement("span");scoreLabel.textContent="/ 5 • Rata-rata skor";score.append(scoreValue,scoreLabel);header.append(score);
+          const chart=document.createElement("div");chart.className="gima-analytics-chart";chart.setAttribute("role","group");chart.setAttribute("aria-label","Skor per pertanyaan dengan rentang 0 sampai 5");
+          for(const q of ready.slice(0,8)){
+            const value=Math.max(0,Math.min(5,Number(q.average_score)));
+            const line=document.createElement("div");line.className="gima-analytics-chart-row";
+            const title=document.createElement("span");title.className="gima-analytics-question";title.textContent=q.question_prompt;
+            const track=document.createElement("div");track.className="gima-analytics-track";const fill=document.createElement("i");fill.style.width=(value*20)+"%";track.append(fill);
+            const scoreText=document.createElement("b");scoreText.textContent=value.toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2})+" / 5";
+            line.append(title,track,scoreText);chart.append(line);
           }
+          box.append(header,chart);
+          const footer=document.createElement("p");footer.className="gima-analytics-caption";footer.textContent=ready.length+" pertanyaan memenuhi ambang privasi. Grafik hanya menggunakan respons yang valid.";box.append(footer);
         }
       }
+      if(!box.contains(header))box.prepend(header);
       an.append(box);
     }
     addHeading(an,"Analisis per survei");makeRows(an,"analysis");
