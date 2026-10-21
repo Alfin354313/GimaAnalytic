@@ -1,0 +1,25 @@
+/* Compact survey report, desktop + mobile; scoped to the survey detail report. */
+[data-view="surveys"] #question-panel{min-width:0}
+[data-view="surveys"] #question-list{font-size:13px;line-height:1.5}
+[data-view="surveys"] #question-list .professional-cover{padding:16px 20px;margin:0 0 12px;background:linear-gradient(110deg,#f0fbfc,#fff);border-radius:12px}
+[data-view="surveys"] #question-list .professional-cover h2{font-size:clamp(20px,2vw,26px);margin:5px 0 8px}
+[data-view="surveys"] #question-list .executive-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0;padding:12px;background:#f2fafc;border:1px solid #d7e9f0;border-radius:12px}
+[data-view="surveys"] #question-list .executive-kpi{min-width:0;margin:0;padding:12px;background:#fff;border:1px solid #dceaf0;border-radius:10px}
+[data-view="surveys"] #question-list .executive-kpi strong{font-size:clamp(19px,2vw,27px);line-height:1.2;color:#075d83}
+[data-view="surveys"] #question-list .report-overview{padding:10px 14px;margin:10px 0}
+[data-view="surveys"] #question-list .report-score{padding:12px 15px;margin:10px 0}
+[data-view="surveys"] #question-list .report-score strong{font-size:24px}
+[data-view="surveys"] #question-list .report-chart{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;align-items:start;margin:12px 0}
+[data-view="surveys"] #question-list .report-item{min-width:0;padding:12px 14px;margin:0;border:1px solid #dcebf0;border-radius:10px;background:#fff}
+[data-view="surveys"] #question-list .report-question{font-size:12px;line-height:1.45;margin-bottom:8px;min-height:34px}
+[data-view="surveys"] #question-list .report-track{height:12px}
+[data-view="surveys"] #question-list .report-bar-line strong{min-width:62px;font-size:12px}
+[data-view="surveys"] #question-list .report-insights{padding:15px 18px;margin:12px 0;border-radius:12px}
+[data-view="surveys"] #question-list .report-insights h3{font-size:15px;margin:0 0 8px}
+[data-view="surveys"] #question-list .report-insights p,[data-view="surveys"] #question-list .report-insights li{line-height:1.45;margin:5px 0}
+[data-view="surveys"] #question-list .professional-method,[data-view="surveys"] #question-list .professional-checklist{padding:12px 16px;margin:10px 0}
+[data-view="surveys"] #question-list .professional-method li,[data-view="surveys"] #question-list .professional-checklist li{margin:4px 0}
+[data-view="surveys"] #question-list .professional-report-footer{margin:12px 0 0}
+@media(max-width:900px){[data-view="surveys"] #question-list .executive-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){[data-view="surveys"] #question-list .report-chart{grid-template-columns:1fr}[data-view="surveys"] #question-list .professional-cover{padding:14px}[data-view="surveys"] #question-list .report-item{padding:11px}}
+@media print{[data-view="surveys"] #question-list .report-chart{display:block!important}[data-view="surveys"] #question-list .report-item{margin:0 0 8px!important;break-inside:avoid}[data-view="surveys"] #question-list .executive-summary{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
