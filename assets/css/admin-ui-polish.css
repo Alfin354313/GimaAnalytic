@@ -1,0 +1,39 @@
+/* GIMA UI polish — preview only. Scoped to organization workspace.
+   Keep original IDs, scripts, Supabase behavior and route structure intact. */
+.gima-admin-main{--gima-ink:#103c48;--gima-accent:#17aeb0;--gima-line:#dcebe8;--gima-soft:#f2faf8;background:#f1f9f7!important;color:var(--gima-ink)}
+.gima-admin-shell{border-color:#d9eae6;box-shadow:0 10px 35px rgba(8,62,57,.055)}
+nav.gima-admin-sidebar{background:linear-gradient(165deg,#103e3b,#064d49)!important}
+nav.gima-admin-sidebar .gima-sidebar-link.is-active{background:#1baeb0!important;color:white!important}
+.gima-admin-main .admin-box,.gima-admin-main .gima-kpi-card,.gima-admin-main .gima-exec-chart,.gima-admin-main .gima-exec-card{background:#fff;border:1px solid var(--gima-line);border-radius:16px;box-shadow:0 5px 18px rgba(8,65,62,.035)}
+.gima-admin-main .admin-box{padding:clamp(16px,2vw,25px)}
+.gima-admin-main .admin-box h2,.gima-admin-main .admin-box h3{color:#123f45;letter-spacing:-.025em}
+.gima-admin-main .admin-meta{color:#60817e;line-height:1.6}
+.gima-admin-main :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){max-width:100%;box-sizing:border-box;min-height:42px;border:1px solid #d2e7e2;border-radius:10px;background:#fff;color:#123f45;padding:10px 12px;font:inherit;transition:border-color .15s ease,box-shadow .15s ease}
+.gima-admin-main textarea{min-height:92px;resize:vertical}
+.gima-admin-main :is(input,select,textarea):focus-visible{outline:2px solid #1aadaf;outline-offset:2px;box-shadow:0 0 0 4px rgba(23,174,176,.09)}
+.gima-admin-main label{color:#245b5b;font-weight:650}
+.gima-admin-main .btn:not(.outline){border-radius:10px;background:#16a9ac;color:#fff;border-color:#16a9ac;box-shadow:none;transition:background .15s ease,transform .15s ease}
+.gima-admin-main .btn:not(.outline):hover{background:#098e92;transform:translateY(-1px)}
+.gima-admin-main .btn.outline{border-radius:10px;border-color:#b7ded9;color:#087d80;background:#fff}
+.gima-admin-main .btn:focus-visible{outline:3px solid #7bd9d4;outline-offset:2px}
+.gima-admin-main table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.gima-admin-main th{background:#e5f4f0;color:#164d4b;text-align:left;font-weight:700}
+.gima-admin-main :is(th,td){padding:12px 14px;border-bottom:1px solid #e6f0ed;vertical-align:middle}
+.gima-admin-main tr:last-child td{border-bottom:0}
+.gima-admin-main tbody tr:hover{background:#f6fbfa}
+.gima-admin-main .admin-stat{background:#f6fbf9;border:1px solid #e1efeb;border-radius:12px;padding:13px}
+.gima-admin-main .admin-stat strong{color:#0b5557}
+.gima-admin-main .gima-kpi-card strong,.gima-admin-main .gima-exec-card strong{color:#103f48}
+.gima-admin-main .gima-exec-bar-row i,.gima-admin-main .gima-feature-track i{background:linear-gradient(90deg,#20b8bd,#16c59e)}
+/* Long legacy panels are visually grouped instead of looking like unstyled forms. */
+.gima-admin-main #create-panel,.gima-admin-main #billing-panel,.gima-admin-main #members-panel,.gima-admin-main #commercial-panel{scroll-margin-top:20px}
+.gima-admin-main #create-form,.gima-admin-main #question-form{display:grid;gap:11px;max-width:100%}
+.gima-admin-main #create-form>.btn,.gima-admin-main #question-form>.btn{justify-self:start;margin-top:8px}
+.gima-admin-main :is(#create-form,#question-form) label{margin-top:4px}
+.gima-admin-main #member-list>*,.gima-admin-main #billing-content>*{min-width:0}
+.gima-admin-main :is(.gima-feature-metric,.gima-feature-result,.gima-feature-settings){border-color:#dcebe8;background:#f8fcfb}
+.gima-admin-main .gima-view-heading{color:#103f45;letter-spacing:-.035em}
+@media(max-width:850px){.gima-admin-main .admin-box{padding:16px}.gima-admin-main :is(th,td){padding:10px 9px}.gima-admin-main .gima-view-heading{font-size:22px}}
+@media(max-width:540px){.gima-admin-main .admin-box{padding:13px}.gima-admin-main table{font-size:12px}.gima-admin-main :is(th,td){padding:8px 6px}.gima-admin-main .btn{min-height:40px}}
+@media(prefers-reduced-motion:reduce){.gima-admin-main .btn,.gima-admin-main :is(input,select,textarea){transition:none!important}}
+@media print{.gima-admin-main .admin-box{box-shadow:none!important;border-color:#ddd!important}}
