@@ -27,3 +27,16 @@
 @media(max-width:850px){.gima-analytics-summary .gima-analytics-kpis{grid-template-columns:1fr 1fr}.gima-analytics-summary .gima-analytics-chart-row{grid-template-columns:1fr 60px;gap:7px}.gima-analytics-summary .gima-analytics-question{grid-column:1/-1}}
 @media(max-width:550px){.gima-analytics-summary .gima-analytics-heading{padding:18px}.gima-analytics-summary .gima-analytics-art{width:55px;height:55px;flex-basis:55px;font-size:34px}.gima-analytics-summary .gima-analytics-kpis{grid-template-columns:1fr}.gima-analytics-summary .gima-analytics-result{padding:16px}.gima-analytics-summary .gima-analytics-result-heading{align-items:flex-start;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.gima-analytics-summary .gima-analytics-track i{transition:none}}
+
+/* Compact desktop refinements and stronger legacy layout overrides */
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-kpis{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-result{padding:20px 22px!important;min-height:0!important}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-chart{display:grid!important;gap:11px!important;width:100%}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-chart-row{display:grid!important;grid-template-columns:minmax(210px,1.4fr) minmax(160px,1fr) 72px!important;align-items:center;gap:16px!important;min-height:28px}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-track{display:block!important;position:relative!important;height:14px!important;background:#e4f1ee!important;border-radius:30px!important;overflow:hidden!important;min-width:0}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-track>i{display:block!important;height:100%!important;min-height:14px;background:linear-gradient(90deg,#0ea9b6,#20c6a0)!important;border-radius:30px!important}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-kpi-icon{width:52px!important;height:52px!important;font-size:29px!important;line-height:1!important}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-result-heading{margin-bottom:14px!important}
+.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-heading{margin-bottom:14px!important}
+@media(max-width:850px){.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-chart-row{grid-template-columns:minmax(90px,1fr) 66px!important;gap:7px!important}.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-question{grid-column:1/-1}}
+@media(max-width:550px){.gima-admin-main [data-view="analysis"] .gima-analytics-summary .gima-analytics-kpis{grid-template-columns:1fr!important}}
