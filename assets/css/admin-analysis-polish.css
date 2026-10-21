@@ -1,0 +1,40 @@
+/* GIMA Analysis: data-first visual polish. Only scoped to analysis view. */
+.analysis-refresh{--gima-aqua:#13b2b2;--gima-ink:#103f46;--gima-muted:#65847f}
+.analysis-refresh .analysis-top{gap:14px}
+.analysis-refresh .dash-card,.analysis-refresh .dash-kpi{border:1px solid #dcebe7;border-radius:16px;background:#fff;box-shadow:0 7px 22px rgba(7,65,59,.045);overflow:hidden}
+.analysis-refresh .analysis-grid{gap:16px}
+.analysis-refresh .analysis-grid>.dash-card{padding:22px}
+.analysis-refresh .analysis-grid>.dash-card>h2{font-size:16px;color:var(--gima-ink);letter-spacing:-.02em;margin:0 0 20px}
+.analysis-refresh .dash-kpi{position:relative;min-height:96px;align-items:center;gap:14px;padding:17px}
+.analysis-refresh .dash-kpi:after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#20c4a8,#18a9bd)}
+.analysis-refresh .analysis-icon{border-radius:13px;background:#ddf6f0;color:#088e91;min-width:43px;height:43px;display:grid;place-items:center;font-size:22px}
+.analysis-refresh .dash-kpi strong{color:#104c52;font-size:clamp(22px,2.3vw,29px)}
+.analysis-refresh .analysis-bar-row{gap:12px;padding:9px 0}
+.analysis-refresh .analysis-bar-track{height:11px;border-radius:30px;background:#e7f3f0;overflow:hidden}
+.analysis-refresh .analysis-bar-track i{display:block;height:100%;border-radius:30px;background:linear-gradient(90deg,#15b7b6,#25c8a5);transition:width .45s ease}
+.analysis-refresh .analysis-bar-track i.previous{background:#a2dcd4}
+.analysis-refresh .analysis-bar-row b{font-variant-numeric:tabular-nums;color:#125c5e}
+.analysis-refresh .analysis-grid svg{max-width:100%;height:auto;overflow:visible}
+.analysis-refresh .analysis-grid svg polygon{stroke-linejoin:round}
+.analysis-refresh .analysis-heatmap{border-collapse:separate;border-spacing:0;overflow:hidden;border-radius:10px}
+.analysis-refresh .analysis-heatmap :is(th,td){padding:12px 13px;border-bottom:1px solid #e4efec}
+.analysis-refresh .analysis-heatmap thead th{background:#e7f4f0;color:#124a4b}
+.analysis-refresh .analysis-heatmap tbody th{color:#345b60;font-weight:600}
+.analysis-refresh .gima-insight-card{grid-column:1/-1;background:linear-gradient(160deg,#fff,#f6fcfa)}
+.analysis-refresh .gima-insight-intro{font-size:12px;color:#64837e;line-height:1.7;margin:0 0 16px}
+.analysis-refresh .gima-insight-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.analysis-refresh .gima-insight-tile{display:grid;align-content:start;gap:7px;min-width:0;border:1px solid #d9ece7;border-radius:13px;padding:17px;background:#f3faf8}
+.analysis-refresh .gima-insight-tile.attention{background:#fffaf1;border-color:#f3e6c9}
+.analysis-refresh .gima-insight-tile.positive{background:#ecfaf5}
+.analysis-refresh .gima-insight-symbol{display:grid;place-items:center;background:white;border:1px solid #e1eeea;border-radius:11px;width:37px;height:37px;font-size:23px;color:#11a8a5}
+.analysis-refresh .gima-insight-tile small{color:#668580;font-weight:650}
+.analysis-refresh .gima-insight-tile strong{font-size:16px;color:#104c52;overflow-wrap:anywhere}
+.analysis-refresh .gima-insight-tile p{margin:0;font-size:11px;color:#718c86}
+.analysis-refresh .gima-insight-ranked{display:grid;gap:13px;padding:17px;background:white;border:1px solid #e3efeb;border-radius:13px}
+.analysis-refresh .gima-insight-ranked-row{display:grid;grid-template-columns:minmax(130px,1fr) minmax(90px,2fr) 70px;gap:12px;align-items:center;font-size:12px}
+.analysis-refresh .gima-insight-ranked-row b{text-align:right;color:#146568;font-variant-numeric:tabular-nums}
+.analysis-refresh .gima-insight-track{height:11px;background:#e8f3f0;border-radius:20px;overflow:hidden}
+.analysis-refresh .gima-insight-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#13b3b9,#1bc79e);transition:width .45s ease}
+@media(max-width:850px){.analysis-refresh .gima-insight-grid{grid-template-columns:1fr 1fr}.analysis-refresh .analysis-grid>.dash-card{padding:16px}}
+@media(max-width:570px){.analysis-refresh .gima-insight-grid{grid-template-columns:1fr}.analysis-refresh .gima-insight-ranked-row{grid-template-columns:1fr 60px}.analysis-refresh .gima-insight-ranked-row span{grid-column:1/-1}.analysis-refresh .analysis-grid>.dash-card{padding:13px}}
+@media(prefers-reduced-motion:reduce){.analysis-refresh .gima-insight-track i,.analysis-refresh .analysis-bar-track i{transition:none}}
