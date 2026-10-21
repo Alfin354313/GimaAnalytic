@@ -9,7 +9,7 @@ const togglePassword=document.getElementById("toggle-password");
 if(togglePassword&&passwordInput)togglePassword.addEventListener("click",()=>{
   const visible=passwordInput.type==="password";
   passwordInput.type=visible?"text":"password";
-  togglePassword.textContent=visible?"Sembunyikan":"Lihat";
+  // Keep the eye icon intact; aria-pressed controls the visible-state slash.
   togglePassword.setAttribute("aria-label",visible?"Sembunyikan password":"Tampilkan password");
   togglePassword.setAttribute("aria-pressed",String(visible));
 });
