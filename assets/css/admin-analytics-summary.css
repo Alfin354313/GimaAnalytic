@@ -1,0 +1,29 @@
+/* Targeted executive summary, not detailed Analysis Survei. */
+[data-view="analysis"] .gima-analytics-summary{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+.gima-analytics-summary .gima-analytics-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(115deg,#e8f8f4,#f7fdfb);border:1px solid #d7ece6;border-radius:18px;padding:24px 26px;margin-bottom:18px;overflow:hidden}
+.gima-analytics-summary .gima-analytics-eyebrow{display:block;color:#0e9d9b;font-size:10px;font-weight:800;letter-spacing:.14em;margin-bottom:9px}
+.gima-analytics-summary .gima-analytics-heading h3{font-size:23px;letter-spacing:-.03em;color:#123e44;margin:0 0 7px}
+.gima-analytics-summary .gima-analytics-heading p{color:#668581;line-height:1.6;font-size:12px;margin:0}
+.gima-analytics-summary .gima-analytics-art{width:95px;height:95px;flex:0 0 95px;border-radius:24px;background:linear-gradient(145deg,#1cc3ae,#1195b2);display:grid;place-items:center;color:white;font-size:58px;transform:rotate(-8deg);box-shadow:0 15px 24px #109fa42e}
+.gima-analytics-summary .gima-analytics-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.gima-analytics-summary .gima-analytics-kpis .gima-feature-metric{display:grid;grid-template-columns:48px 1fr;align-content:center;column-gap:12px;row-gap:5px;padding:18px;background:#fff;border:1px solid #dbece8;border-radius:15px;box-shadow:0 7px 18px #0b55500a;min-height:112px}
+.gima-analytics-summary .gima-analytics-kpi-icon{grid-row:1/4;display:grid;place-items:center;align-self:center;background:#e3f8f2;color:#0ba9a4;border-radius:13px;width:46px;height:46px;font-size:23px}
+.gima-analytics-summary .gima-feature-metric>span:not(.gima-analytics-kpi-icon){font-size:12px;color:#547774}
+.gima-analytics-summary .gima-feature-metric strong{font-size:27px;line-height:1.2;color:#104a51}
+.gima-analytics-summary .gima-feature-metric small{font-size:10px;color:#79928d}
+.gima-analytics-summary .gima-analytics-result{background:white;border:1px solid #dcebe8;border-radius:17px;padding:23px 24px;margin:0 0 18px;box-shadow:0 8px 22px #124d4909}
+.gima-analytics-summary .gima-analytics-result-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.gima-analytics-summary .gima-analytics-result-heading h3{margin:0;font-size:17px;color:#164750;letter-spacing:-.02em}
+.gima-analytics-summary .gima-analytics-overall{display:flex;align-items:baseline;gap:7px;background:#ecfaf5;border:1px solid #d7efe8;border-radius:12px;padding:10px 14px;white-space:nowrap}
+.gima-analytics-summary .gima-analytics-overall strong{font-size:25px;color:#0b8f90}
+.gima-analytics-summary .gima-analytics-overall span{font-size:10px;color:#688c85}
+.gima-analytics-summary .gima-analytics-chart{display:grid;gap:16px}
+.gima-analytics-summary .gima-analytics-chart-row{display:grid;grid-template-columns:minmax(160px,1.7fr) minmax(90px,1fr) 70px;gap:16px;align-items:center}
+.gima-analytics-summary .gima-analytics-question{font-size:12px;color:#355e61;line-height:1.45}
+.gima-analytics-summary .gima-analytics-track{height:12px;background:#e5f2f1;border-radius:20px;overflow:hidden}
+.gima-analytics-summary .gima-analytics-track i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#1ab3ba,#26c5a5);transition:width .4s ease}
+.gima-analytics-summary .gima-analytics-chart-row b{color:#17686a;font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.gima-analytics-summary .gima-analytics-caption{border-top:1px solid #e8f2ee;margin:22px 0 0;padding-top:12px;font-size:11px;color:#73918c}
+@media(max-width:850px){.gima-analytics-summary .gima-analytics-kpis{grid-template-columns:1fr 1fr}.gima-analytics-summary .gima-analytics-chart-row{grid-template-columns:1fr 60px;gap:7px}.gima-analytics-summary .gima-analytics-question{grid-column:1/-1}}
+@media(max-width:550px){.gima-analytics-summary .gima-analytics-heading{padding:18px}.gima-analytics-summary .gima-analytics-art{width:55px;height:55px;flex-basis:55px;font-size:34px}.gima-analytics-summary .gima-analytics-kpis{grid-template-columns:1fr}.gima-analytics-summary .gima-analytics-result{padding:16px}.gima-analytics-summary .gima-analytics-result-heading{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.gima-analytics-summary .gima-analytics-track i{transition:none}}
